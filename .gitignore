@@ -1,0 +1,14 @@
+# secrets — never commit credentials
+*.key
+*.pem
+*-token.txt
+*-admin-pw.txt
+*.env
+.env
+secrets/
+
+# runtime data / state
+nova-gateway-data/
+*.db
+*.db-wal
+*.db-shm
