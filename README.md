@@ -6,12 +6,22 @@ local GPU inference, the local router, and the host-level guardrails — so a ne
 box is reproducible from source.
 
 ## What it deploys
+
+```mermaid
+flowchart LR
+    C["sudocode / sudowork"] --> R{"nova-gateway<br/>local sudorouter"}
+    R -->|local channel| G["gpustack<br/>local GPU inference"]
+    R -->|stacked upstream| S["sudorouter.ai<br/>cloud models"]
+    G --- H["GB10 · 128GB unified memory"]
+    classDef local stroke:#3b6fd4,stroke-width:2px;
+    classDef cloud stroke:#d98a3b,stroke-width:2px;
+    class G,H local;
+    class S cloud;
 ```
-sudocode / sudowork  ->  nova-gateway (local sudorouter)  -+->  gpustack (local GPU inference)
-                                                           +->  sudorouter.ai (cloud models, stacked)
-```
-Architecture and rationale live in the design doc on ShareOne
-(`s.shareone.vip/s/sudo-stack-on-dgx-spark-she`); this repo is its source of truth.
+
+Full architecture and rationale: the design doc on ShareOne
+(`s.shareone.vip/s/sudo-stack-on-dgx-spark-she`) — the source of truth for the
+design; this repo holds the deployable artifacts.
 
 ## Layout
 - `compose/` — the container stack (gpustack + nova-gateway), pinned.
