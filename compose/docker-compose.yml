@@ -1,4 +1,4 @@
-# sudo-edge — the container stack for an edge GPU box.
+# sudoedge — the container stack for an edge GPU box.
 #   gpustack   — local GPU inference (spawns the vLLM runner as a sibling container)
 #   sudorouter — nova-gateway, the local OpenAI-compatible router
 #
@@ -7,7 +7,7 @@
 #   2. scripts/bootstrap.sh            → host guardrails + compose/.env (TEE_KEY)
 #   3. docker compose up -d
 #   4. scripts/configure.sh            → channels, relay token, sudocode wiring
-name: sudo-edge
+name: sudoedge
 
 services:
   gpustack:

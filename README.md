@@ -1,4 +1,4 @@
-# sudo-edge
+# sudoedge
 
 Deployable package for the sudo stack on an edge GPU box (first target: NVIDIA
 DGX Spark / GB10). One clone plus a provisioning run stands up the whole stack —
