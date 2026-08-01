@@ -59,7 +59,7 @@ TOK="sk-$(curl -s "${AUTH[@]}" "$B/api/token/?p=0&page_size=10" \
 
 echo "[configure] wiring sudocode.json"
 python3 - "$TOK" "$GPUSTACK_KEY" "$MODEL" "$GPUSTACK_URL" <<'PY'
-import json,sys,pathlib
+import json,sys,pathlib,time
 tok,gkey,model,gurl=sys.argv[1:5]
 cfg={"auth_modes":{"api-key":{
       "nova-gateway":{"baseUrl":"http://127.0.0.1:3000/v1","apiKey":tok},
@@ -72,7 +72,11 @@ cfg={"auth_modes":{"api-key":{
 d=pathlib.Path.home()/".nexus"/"sudocode"; d.mkdir(parents=True,exist_ok=True)
 (d/"sudocode.json").write_text(json.dumps(cfg,indent=2,ensure_ascii=False))
 c=d/"cache"; c.mkdir(exist_ok=True)
-(c/"model-capabilities.json").write_text(json.dumps({"models":{model:{"context_window":32768,"max_output_tokens":8192}}},indent=2))
+# Fresh updated_at so scode treats the cache as current (else it overwrites with its
+# bundled DB, which lacks our model -> falls back to 64000 output tokens). default caps
+# any unmatched model too.
+cap={"context_window":32768,"max_output_tokens":8192}
+(c/"model-capabilities.json").write_text(json.dumps({"updated_at":int(time.time()),"default":cap,"models":{model:cap}},indent=2))
 print("  sudocode: qwen3-local -> nova-gateway (primary), qwen3-direct -> gpustack (fallback)")
 PY
 echo "[configure] done"
