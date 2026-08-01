@@ -21,7 +21,7 @@ done
 login() { # $1=password → prints "session=..." or empty
   curl -s -D - -o /dev/null -H 'Content-Type: application/json' \
     --data "{\"username\":\"root\",\"password\":\"$1\"}" "$B/api/user/login" \
-    | grep -i '^set-cookie:' | sed -E 's/.*(session=[^;]+).*/\1/' | tr -d '\r'
+    | grep -i '^set-cookie:' | sed -E 's/.*(session=[^;]+).*/\1/' | tr -d '\r' || true
 }
 
 # The fork seeds root/sudosudo; adopt the desired admin password.
@@ -55,7 +55,7 @@ curl -s "${AUTH[@]}" -H 'Content-Type: application/json' --data \
   '{"name":"sudocode","expired_time":-1,"unlimited_quota":true,"model_limits_enabled":false,"group":"default"}' \
   "$B/api/token/" >/dev/null
 TOK="sk-$(curl -s "${AUTH[@]}" "$B/api/token/?p=0&page_size=10" \
-  | python3 -c "import sys,json;d=json.load(sys.stdin)['data'];it=d['items'] if isinstance(d,dict) else d;print(next(t['key'] for t in it if t['name']=='sudocode'))")"
+  | python3 -c "import sys,json;d=json.load(sys.stdin)['data'];it=d['items'] if isinstance(d,dict) else d;print(next((t['key'] for t in it if t['name']=='sudocode'),''))")"
 
 echo "[configure] wiring sudocode.json"
 python3 - "$TOK" "$GPUSTACK_KEY" "$MODEL" "$GPUSTACK_URL" <<'PY'
