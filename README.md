@@ -1,9 +1,36 @@
 # sudoedge
 
-Deployable package for the sudo stack on an edge GPU box (first target: NVIDIA
-DGX Spark / GB10). One clone plus a provisioning run stands up the whole stack —
-local GPU inference, the local router, and the host-level guardrails — so a new
-box is reproducible from source.
+The deployable **edge form** of the sudo stack — the box a forward-deployed
+engineer (FDE) carries to a customer. It runs the full stack locally on a DGX
+(first target: GB10), keeps customer data on-site, and collaborates with the
+SaaS super-agent across a **cross-org trust boundary** (cross-CA signed,
+privacy/compliance-preserving). One clone plus a provisioning run stands it up
+from source; the box can be left at the customer.
+
+## The scenario
+
+```mermaid
+flowchart LR
+    subgraph SITE["Customer site"]
+      FDE(["FDE brings the box"]) --> DGX
+      subgraph DGX["DGX · sudoedge — own trust domain (CA_B)"]
+        LS["full stack, local<br/>sudowork · sudocode · nexus · gpustack"]
+      end
+      D[("customer data<br/>stays local")] --- LS
+    end
+    subgraph SAAS["SaaS super-agent — trust domain (CA_A)"]
+      S["sudowork · sudocode<br/>nexus · sudorouter"]
+    end
+    LS <-. "cross-CA signed collab + cloud models · no data egress" .-> S
+    classDef e stroke:#3b6fd4,stroke-width:2px;
+    classDef s stroke:#d98a3b,stroke-width:2px;
+    class LS,D,DGX e
+    class S s
+```
+
+The box is its **own** trust domain (self-signed CA_B) — it never joins our
+cluster; its agents' authorship is verified cross-CA by the SaaS broker, and
+only signed messages cross the boundary, never data.
 
 ## What it deploys
 
@@ -11,17 +38,17 @@ box is reproducible from source.
 flowchart LR
     C["sudocode / sudowork"] --> R{"nova-gateway<br/>local sudorouter"}
     R -->|local channel| G["gpustack<br/>local GPU inference"]
-    R -->|stacked upstream| S["sudorouter.ai<br/>cloud models"]
+    R -->|stacked upstream| X["sudorouter.ai<br/>cloud models"]
     G --- H["GB10 · 128GB unified memory"]
     classDef local stroke:#3b6fd4,stroke-width:2px;
     classDef cloud stroke:#d98a3b,stroke-width:2px;
     class G,H local;
-    class S cloud;
+    class X cloud;
 ```
 
 Full architecture and rationale: the design doc on ShareOne
-(`s.shareone.vip/s/sudo-stack-on-dgx-spark-she`) — the source of truth for the
-design; this repo holds the deployable artifacts.
+(`s.shareone.vip/s/sudo-stack-on-dgx-spark-she`); cross-org authorship in
+`nexus-auth-architecture` §5. This repo holds the deployable artifacts.
 
 ## Layout
 - `compose/` — the container stack (gpustack + nova-gateway), pinned.
@@ -30,8 +57,9 @@ design; this repo holds the deployable artifacts.
 - `docs/` — the design doc and the operator runbook (`SETUP.md`).
 
 ## Credential handling
-The one upstream credential (the SaaS router key) reaches the edge just-in-time
-and stays out of persistent storage: nova-gateway's state lives on a RAM-backed
-volume, and `configure.sh` injects the cloud channel at deploy time. The repo and
-images carry no secrets. Edge boxes reach production hardening via device-attested
-access (TEE), where the raw key never lands on the box.
+The box carries its **own identity** (self-signed CA_B) for cross-org agent
+authorship, and never receives our CA or joins our cluster. The one upstream
+credential (the SaaS router key) reaches the edge just-in-time and stays out of
+persistent storage — nova-gateway's state is RAM-backed, `configure.sh` injects
+the cloud channel at deploy, and the repo/images carry no secrets. Production
+hardening: device-attested (TEE) access so the raw key never lands on the box.
