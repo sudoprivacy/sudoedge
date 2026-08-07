@@ -1,25 +1,17 @@
-# sudoedge — the container stack for an edge GPU box.
-#   gpustack   — local GPU inference (spawns the vLLM runner as a sibling container)
-#   sudorouter — nova-gateway, the local OpenAI-compatible router
+# sudoedge — the local router container (nova-gateway / sudorouter).
+# gpustack is deployed separately by scripts/deploy-gpustack.sh: its
+# server + privileged-worker + join-token lifecycle can't be expressed in compose.
 #
 # Deploy order:
 #   1. scripts/build-nova-gateway.sh   → builds sudorouter:latest
 #   2. scripts/bootstrap.sh            → host guardrails + compose/.env (TEE_KEY)
-#   3. docker compose up -d
-#   4. scripts/configure.sh            → channels, relay token, sudocode wiring
+#   3. scripts/deploy-gpustack.sh      → gpustack server + worker
+#   4. docker compose up -d            → the router
+#   5. scripts/deploy-model.sh         → deploy a model onto gpustack
+#   6. scripts/configure.sh            → channels, relay token, sudocode wiring
 name: sudoedge
 
 services:
-  gpustack:
-    image: quay.io/gpustack/gpustack:latest      # pin a digest for a real release
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    command: ["--system-default-container-registry", "quay.io"]
-    volumes:
-      - gpustack-data:/var/lib/gpustack           # model weights cache — persists on disk
-      - /var/run/docker.sock:/var/run/docker.sock # gpustack launches the vLLM runner as a sibling
-
   sudorouter:
     image: sudorouter:latest                       # built from the nova-gateway repo by scripts/build-nova-gateway.sh
     restart: always
@@ -33,8 +25,3 @@ services:
       TEE_UID: "0"
     tmpfs:
       - /data                                      # RAM-backed: no credential is written to the box's disk
-    depends_on:
-      - gpustack
-
-volumes:
-  gpustack-data:
