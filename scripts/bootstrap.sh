@@ -53,4 +53,23 @@ if [ ! -f "$repo/compose/.env" ]; then
   chown "$owner":"$owner" "$repo/compose/.env"   # deployer (not root) runs compose
 fi
 
+echo "[bootstrap] boot-reprovision hook (router /data is RAM-backed → re-configure on boot)"
+key_file="$(getent passwd "$owner" | cut -d: -f6)/sudo-dgx/gpustack-key.json"
+tee /etc/systemd/system/sudoedge-reconfigure.service >/dev/null <<UNIT
+[Unit]
+Description=sudoedge re-apply router config after boot (nova-gateway state is RAM-backed)
+After=docker.service
+Wants=docker.service
+[Service]
+Type=oneshot
+User=$owner
+Environment=GPUSTACK_KEY_FILE=$key_file
+ExecStart=/usr/bin/env bash $repo/scripts/reconfigure-on-boot.sh $repo
+RemainAfterExit=yes
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl daemon-reload
+systemctl enable sudoedge-reconfigure.service >/dev/null 2>&1 && echo "[bootstrap]   enabled sudoedge-reconfigure.service"
+
 echo "[bootstrap] done — next: docker compose -f compose/docker-compose.yml up -d"
