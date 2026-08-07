@@ -7,6 +7,21 @@ here="$(cd "$(dirname "$0")" && pwd)"
 repo="$(cd "$here/.." && pwd)"
 owner="${SUDO_USER:-root}"
 
+echo "[bootstrap] base-host prerequisites (a DGX ships these; installs on a bare box)"
+if ! command -v docker >/dev/null; then
+  echo "[bootstrap]   installing docker"; curl -fsSL https://get.docker.com | sh
+fi
+docker compose version >/dev/null 2>&1 || echo "[bootstrap]   WARN: docker compose plugin missing"
+if ! docker info --format '{{json .Runtimes}}' 2>/dev/null | grep -q '"nvidia"'; then
+  if command -v nvidia-ctk >/dev/null; then
+    echo "[bootstrap]   configuring nvidia container runtime"
+    nvidia-ctk runtime configure --runtime=docker && systemctl restart docker
+  else
+    echo "[bootstrap]   WARN: nvidia-container-toolkit not found (DGX OS ships it) — GPU containers need it"
+  fi
+fi
+nvidia-smi >/dev/null 2>&1 || echo "[bootstrap]   WARN: nvidia-smi not working — check the GPU driver"
+
 echo "[bootstrap] cgroup memory reservations (persist across reboot)"
 systemctl set-property system.slice MemoryMin=12G
 systemctl set-property ssh.service MemoryMin=512M
