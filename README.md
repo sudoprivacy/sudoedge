@@ -56,6 +56,15 @@ Full architecture and rationale: the design doc on ShareOne
 - `scripts/configure.sh` — the runbook steps as code: model deploy, channel registration, sudocode wiring.
 - `docs/` — the design doc and the operator runbook (`SETUP.md`).
 
+## How results leave the box
+The box carries its own **ShareOne** instance, so work produced on site is
+drafted, reviewed and commented **inside** the box — the artifact surface stays
+available with no egress at all, which is what an isolated site needs. What
+leaves is a redacted deliverable, never the source data: when the box is
+online, that deliverable can be pushed to the customer's Atlas ShareOne or to
+the public one. Live collaboration with the SaaS super-agent rides the
+cross-CA A2A channel instead (messages cross, data does not).
+
 ## Credential handling
 The box carries its **own identity** (self-signed CA_B) for cross-org agent
 authorship, and never receives our CA or joins our cluster. The one upstream
