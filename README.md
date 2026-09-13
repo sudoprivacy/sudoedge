@@ -65,6 +65,13 @@ online, that deliverable can be pushed to the customer's Atlas ShareOne or to
 the public one. Live collaboration with the SaaS super-agent rides the
 cross-CA A2A channel instead (messages cross, data does not).
 
+A model call is the third way out — a prompt sent to a cloud model has left the
+box as surely as a message has — so the router treats it as one. The local GPU
+channel serves the `default` group that a local agent's token carries; the
+cloud channel lands in a separate `external` group and ships disabled, so
+reaching a cloud model takes a deliberate act by the FDE or by an agent that
+knows its task touches no customer data.
+
 ## Credential handling
 The box carries its **own identity** (self-signed CA_B) for cross-org agent
 authorship, and never receives our CA or joins our cluster. The one upstream

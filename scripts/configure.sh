@@ -41,13 +41,19 @@ curl -s "${AUTH[@]}" -H 'Content-Type: application/json' --data \
   "{\"mode\":\"single\",\"channel\":{\"type\":8,\"name\":\"gpustack-local\",\"key\":\"$GPUSTACK_KEY\",\"base_url\":\"$GPUSTACK_URL/chat/completions\",\"models\":\"$MODEL\",\"group\":\"default\",\"groups\":[\"default\"]}}" \
   "$B/api/channel/" >/dev/null
 
+# A prompt sent to a cloud model is data leaving the box, so the cloud channel
+# ships behind two independent controls: it lands in the `external` group (the
+# `default` group a local agent's token carries can never route to it) and it
+# lands disabled. Turning it on is a deliberate act by the FDE or an agent that
+# knows the task touches no customer data — never a side effect of deploying.
 if [ -n "${SUDOROUTER_KEY:-}" ]; then
-  echo "[configure] cloud channel (sudorouter.ai — key injected just-in-time)"
+  echo "[configure] cloud channel (sudorouter.ai — key injected just-in-time; group=external, disabled)"
   CLOUD_URL="${SUDOROUTER_URL:-https://hk.sudorouter.ai/v1}"
   CLOUD_MODELS="${SUDOROUTER_MODELS:-claude-opus-4-8,gpt-5.5,gemini-3.5-flash,deepseek-v4-pro}"
   curl -s "${AUTH[@]}" -H 'Content-Type: application/json' --data \
-    "{\"mode\":\"single\",\"channel\":{\"type\":1,\"name\":\"sudorouter-cloud\",\"key\":\"$SUDOROUTER_KEY\",\"base_url\":\"$CLOUD_URL\",\"models\":\"$CLOUD_MODELS\",\"group\":\"default\",\"groups\":[\"default\"]}}" \
+    "{\"mode\":\"single\",\"channel\":{\"type\":1,\"name\":\"sudorouter-cloud\",\"key\":\"$SUDOROUTER_KEY\",\"base_url\":\"$CLOUD_URL\",\"models\":\"$CLOUD_MODELS\",\"status\":2,\"group\":\"external\",\"groups\":[\"external\"]}}" \
     "$B/api/channel/" >/dev/null
+  echo "[configure]   to use it: enable the channel, and issue a token in the 'external' group"
 fi
 
 echo "[configure] relay token"
