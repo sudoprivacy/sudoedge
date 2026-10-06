@@ -55,6 +55,7 @@ Full architecture and rationale: the design doc on ShareOne
 - `scripts/bootstrap.sh` — host layer: package/image mirrors, cgroup memory reservations, the memory guard, the container runtime.
 - `scripts/configure.sh` — the runbook steps as code: model deploy, channel registration, sudocode wiring.
 - `docs/` — the design doc and the operator runbook (`SETUP.md`).
+- `presidio/` — a Presidio analyzer image with Chinese NER, the contextual detector behind the egress content gate (see below). Loopback only.
 
 ## How results leave the box
 The box carries its own **ShareOne** instance, so work produced on site is
@@ -71,6 +72,16 @@ channel serves the `default` group that a local agent's token carries; the
 cloud channel lands in a separate `external` group and ships disabled, so
 reaching a cloud model takes a deliberate act by the FDE or by an agent that
 knows its task touches no customer data.
+
+What crosses those ways out is checked on the box's own kernel by the egress
+content gate (nexus-vfs `egress_gate`): every write that passes through that
+kernel onto an egress plane — a prompt to a model mount named in
+`NEXUS_EGRESS_GATE_MODEL_MOUNTS`, or an A2A transcript the box's kernel holds —
+is classified and then redacted or refused before it leaves. Prompts to the local model are not gated; that model is the
+one allowed to see the data. The provable identifiers (identity card, bank
+card, mobile, social credit code) are checksum rules inside the daemon; names,
+places and organisations come from the `presidio/` analyzer, which runs on
+loopback because the text it classifies is sent to it.
 
 ## Credential handling
 The box carries its **own identity** (self-signed CA_B) for cross-org agent
