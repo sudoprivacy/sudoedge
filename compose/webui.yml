@@ -1,0 +1,59 @@
+# Build the pinned Sudowork source with apps/webui/Dockerfile before starting.
+# Browser access uses an SSH tunnel to localhost, keeping cookies on a trusted
+# origin without requiring a new LAN certificate authority on the user's laptop.
+name: sudoedge-ui
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sudowork_webui
+      POSTGRES_USER: sudoedge
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    ports:
+      - '127.0.0.1:25432:5432'
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sudoedge -d sudowork_webui']
+      interval: 3s
+      timeout: 3s
+      retries: 15
+  migrate:
+    image: ${WEBUI_IMAGE:?set the tested image tag}
+    network_mode: host
+    command: ['node', 'dist/server/migrate.js']
+    environment: &webui-env
+      DATABASE_URL: postgres://sudoedge:${POSTGRES_PASSWORD}@127.0.0.1:25432/sudowork_webui
+      SESSION_HMAC_KEY: ${SESSION_HMAC_KEY:?required}
+      TOKEN_AES_KEY: ${TOKEN_AES_KEY:?required}
+      PUBLIC_ORIGIN: http://localhost:12808
+      MOSS_BASE_URL: http://127.0.0.1:43127
+      MOSS_WS_BASE_URL: ws://127.0.0.1:43127
+      MOSS_ALLOWED_ORIGINS: ${MOSS_ALLOWED_ORIGINS:-https://agent.sudoprivacy.com}
+      PORT: '26808'
+      NODE_ENV: development
+      CONFIG_PATH: /etc/sudoedge/webui.json
+    volumes:
+      - ./webui.json:/etc/sudoedge/webui.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+  webui:
+    image: ${WEBUI_IMAGE:?set the tested image tag}
+    network_mode: host
+    restart: unless-stopped
+    environment: *webui-env
+    volumes:
+      - ./webui.json:/etc/sudoedge/webui.json:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:26808/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+volumes:
+  postgres:

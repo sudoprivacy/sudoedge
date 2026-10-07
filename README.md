@@ -1,11 +1,11 @@
 # sudoedge
 
 The deployable **edge form** of the sudo stack — the box a forward-deployed
-engineer (FDE) carries to a customer. It runs the full stack locally on a DGX
-(first target: GB10), keeps customer data on-site, and collaborates with the
-SaaS super-agent across a **cross-org trust boundary** (cross-CA signed,
-privacy/compliance-preserving). One clone plus a provisioning run stands it up
-from source; the box can be left at the customer.
+engineer (FDE) carries to a customer. Its target is a local stack on DGX
+(first target: GB10) with optional cloud services across a separate trust
+domain. Current deployment and acceptance evidence lives in `docs/SETUP.md`.
+The local browser and inference path uses the cohost runtime by default;
+cross-domain agent collaboration and content inspection remain tracked work.
 
 ## The scenario
 
@@ -21,7 +21,7 @@ flowchart LR
     subgraph SAAS["SaaS super-agent — trust domain (CA_A)"]
       S["sudowork · sudocode<br/>nexus · sudorouter"]
     end
-    LS <-. "cross-CA signed collab + cloud models · no data egress" .-> S
+    LS <-. "optional signed collaboration + cloud model requests" .-> S
     classDef e stroke:#3b6fd4,stroke-width:2px;
     classDef s stroke:#d98a3b,stroke-width:2px;
     class LS,D,DGX e
@@ -30,13 +30,14 @@ flowchart LR
 
 The box is its **own** trust domain (self-signed CA_B) — it never joins our
 cluster; its agents' authorship is verified cross-CA by the SaaS broker, and
-only signed messages cross the boundary, never data.
+cross-domain messages carry authenticated authorship. Message text, artifacts
+and model prompts can contain customer data; signatures alone do not filter it.
 
 ## What it deploys
 
 ```mermaid
 flowchart LR
-    C["sudocode / sudowork"] --> R{"nova-gateway<br/>local sudorouter"}
+    C["sudocode / sudowork"] --> R{"new-api<br/>local sudorouter"}
     R -->|local channel| G["gpustack<br/>local GPU inference"]
     R -->|stacked upstream| X["sudorouter.ai<br/>cloud models"]
     G --- H["GB10 · 128GB unified memory"]
@@ -49,29 +50,113 @@ flowchart LR
 Full architecture and rationale: the design doc on ShareOne
 (`s.shareone.vip/s/sudo-stack-on-dgx-spark-she`); cross-org authorship in
 `nexus-auth-architecture` §5. This repo holds the deployable artifacts.
+The current cloud/box target and migration checklist are maintained in
+[Sudo Cloud architecture](https://s.shareone.vip/md/sudo-cloud-plan).
 
 ## Layout
-- `compose/` — the container stack (gpustack + nova-gateway), pinned.
+- `compose/` — local new-api Router and Sudowork WebUI containers.
 - `scripts/bootstrap.sh` — host layer: package/image mirrors, cgroup memory reservations, the memory guard, the container runtime.
 - `scripts/configure.sh` — the runbook steps as code: model deploy, channel registration, sudocode wiring.
 - `docs/` — the design doc and the operator runbook (`SETUP.md`).
 - `presidio/` — a Presidio analyzer image with Chinese NER, the contextual detector behind the egress content gate (see below). Loopback only.
 
 ## How results leave the box
-The box carries its own **ShareOne** instance, so work produced on site is
+The target deployment includes its own **ShareOne** instance, so work produced on site is
 drafted, reviewed and commented **inside** the box — the artifact surface stays
 available with no egress at all, which is what an isolated site needs. What
 leaves is a redacted deliverable, never the source data: when the box is
 online, that deliverable can be pushed to the customer's Atlas ShareOne or to
 the public one. Live collaboration with the SaaS super-agent rides the
-cross-CA A2A channel instead (messages cross, data does not).
+cross-CA A2A channel. Local ShareOne and the content inspection gate still need
+deployment and acceptance; the current browser bring-up stores files in each
+session's local workspace.
 
-A model call is the third way out — a prompt sent to a cloud model has left the
-box as surely as a message has — so the router treats it as one. The local GPU
-channel serves the `default` group that a local agent's token carries; the
-cloud channel lands in a separate `external` group and ships disabled, so
-reaching a cloud model takes a deliberate act by the FDE or by an agent that
-knows its task touches no customer data.
+A model call is also an outbound transfer. Configured local and cloud model
+channels share the `default` group and are enabled by default. The appliance
+starts online; an operator can persistently stop public-network traffic:
+
+```bash
+sudo bash scripts/install-ops.sh
+sudo sudoedge connectivity local     # stop public IPv4/IPv6 egress
+sudo sudoedge connectivity online    # restore the host's normal network policy
+sudoedge connectivity status
+sudoedge status                      # connectivity + WebUI/Moss/Router reachability
+sudoedge webui status
+sudoedge model restore               # reapply the configured Nexus model mount
+```
+
+The policy covers host output and forwarded container traffic, including
+existing connections. Private LAN, loopback, link-local discovery and DHCP
+remain available. It restores before networking/Docker after boot and only
+manages its own nftables table. It is an appliance network switch: LAN proxies
+and publicly addressed on-premises networks need a site-specific policy.
+Run `sudo bash tests/connectivity.sh` for the isolated network regression.
+
+`sudoedge` is the operator entry point, installed by the command above and by
+bootstrap. The `sudoedge.service` unit restores its persisted connectivity
+mode during boot. Shared component contracts and assembly belong in
+`sudostack`; device deployment, networking and operator commands belong here.
+`status` checks service reachability; a healthy endpoint does not prove model
+quality or a cloud login. No cloud credential means no usable cloud channel,
+even when the network mode is online.
+
+## Browser access on DGX
+
+`compose/webui.yml` runs the real Sudowork WebUI with PostgreSQL. It connects
+to local Moss on port 43127 and also allows selecting the configured cloud
+Moss at login. Moss uses mTLS for its primary Nexus connection and a second
+local mTLS identity for the cohost execution Nexus. Browser sessions now use
+the production path `Moss → local ManagedAgentService → in-process scode →
+Nexus /model → new-api → GPUStack` when `MOSS_DEFAULT_RUNTIME=cohost`.
+
+Install the sudocode-provided ARM64 cohost binary and the appliance service
+with:
+
+```bash
+bash scripts/install-cohost.sh /path/to/nexusd-cohost
+```
+
+Set `MOSS_COHOST_NEXUS_MODE`, `MOSS_COHOST_NEXUS_ENDPOINT`, the three
+`MOSS_COHOST_NEXUS_TLS_*` paths and `MOSS_DEFAULT_RUNTIME=cohost` in the Moss
+service environment. The runbook records the DGX acceptance session and
+keeps the primary 22140 Nexus reserved for Moss vault and login traffic.
+
+Build WebUI from the Sudowork repository's `apps/webui/Dockerfile`, then set
+`WEBUI_IMAGE`, `POSTGRES_PASSWORD`, `SESSION_HMAC_KEY` and `TOKEN_AES_KEY` in
+a private environment file and run:
+
+```bash
+docker compose --env-file webui.env -f compose/webui.yml up -d
+```
+
+On a laptop with SSH access to the box:
+
+```bash
+ssh -N -L 127.0.0.1:12808:127.0.0.1:26808 taolei@192.168.1.11
+```
+
+Open **http://localhost:12808** on the laptop running SSH. On Windows:
+
+```powershell
+.\scripts\open-webui.ps1
+```
+
+This installs the current user's `SudoEdge-WebUI-12808` scheduled task, starts
+the tunnel, checks WebUI health and opens the browser. It reconnects after SSH
+disconnects and starts again at Windows sign-in. It copies its helper into
+`%LOCALAPPDATA%\SudoEdge-WebUI-12808`, with a bounded tunnel log there, so it
+does not depend on a temporary checkout staying present. `-NoBrowser` checks
+the connection without opening a window. Stop/remove it when no longer needed:
+
+```powershell
+Stop-ScheduledTask -TaskName SudoEdge-WebUI-12808
+Unregister-ScheduledTask -TaskName SudoEdge-WebUI-12808 -Confirm:$false
+```
+
+This uses an encrypted LAN connection and
+a localhost browser origin. WebUI and PostgreSQL listen only on loopback.
+The box does not need Electron. Login credentials belong in password-agent,
+not this repository or the architecture page.
 
 What crosses those ways out is checked on the box's own kernel by the egress
 content gate (nexus-vfs `egress_gate`): every write that passes through that
@@ -87,6 +172,6 @@ loopback because the text it classifies is sent to it.
 The box carries its **own identity** (self-signed CA_B) for cross-org agent
 authorship, and never receives our CA or joins our cluster. The one upstream
 credential (the SaaS router key) reaches the edge just-in-time and stays out of
-persistent storage — nova-gateway's state is RAM-backed, `configure.sh` injects
+persistent storage — new-api's state is RAM-backed, `configure.sh` injects
 the cloud channel at deploy, and the repo/images carry no secrets. Production
 hardening: device-attested (TEE) access so the raw key never lands on the box.

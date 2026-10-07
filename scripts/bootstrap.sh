@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Host layer for an edge GPU box: memory guardrails + the router's TEE key.
+# Host layer for an edge GPU box: memory guardrails and Router credentials.
 # Run once per box, as root:  sudo bash scripts/bootstrap.sh   (idempotent)
 set -euo pipefail
 [ "$(id -u)" -eq 0 ] || { echo "run as root: sudo bash $0"; exit 1; }
@@ -46,24 +46,27 @@ UNIT
 systemctl daemon-reload
 systemctl enable --now sudo-mem-guard.service
 
-echo "[bootstrap] throwaway TEE key for the router (kept out of git)"
-if [ ! -f "$repo/compose/.env" ]; then
-  key="$(openssl ecparam -name prime256v1 -genkey -noout -outform DER | base64 -w0)"
-  ( umask 077; printf 'TEE_KEY=%s\n' "$key" > "$repo/compose/.env" )
-  chown "$owner":"$owner" "$repo/compose/.env"   # deployer (not root) runs compose
+echo "[bootstrap] local Router administrator credential"
+owner_home="$(getent passwd "$owner" | cut -d: -f6)"
+admin_file="$owner_home/sudo-dgx/router-admin-pw.txt"
+install -d -m700 -o "$owner" -g "$owner" "$owner_home/sudo-dgx"
+if [ ! -f "$admin_file" ]; then
+  ( umask 077; openssl rand -base64 24 > "$admin_file" )
+  chown "$owner":"$owner" "$admin_file"
 fi
 
 echo "[bootstrap] boot-reprovision hook (router /data is RAM-backed → re-configure on boot)"
 key_file="$(getent passwd "$owner" | cut -d: -f6)/sudo-dgx/gpustack-key.json"
 tee /etc/systemd/system/sudoedge-reconfigure.service >/dev/null <<UNIT
 [Unit]
-Description=sudoedge re-apply router config after boot (nova-gateway state is RAM-backed)
+Description=SudoEdge restore new-api configuration after boot
 After=docker.service
 Wants=docker.service
 [Service]
 Type=oneshot
 User=$owner
 Environment=GPUSTACK_KEY_FILE=$key_file
+Environment=ADMIN_PW_FILE=$admin_file
 ExecStart=/usr/bin/env bash $repo/scripts/reconfigure-on-boot.sh $repo
 RemainAfterExit=yes
 [Install]
@@ -71,5 +74,9 @@ WantedBy=multi-user.target
 UNIT
 systemctl daemon-reload
 systemctl enable sudoedge-reconfigure.service >/dev/null 2>&1 && echo "[bootstrap]   enabled sudoedge-reconfigure.service"
+
+echo "[bootstrap] persistent connectivity mode (online by default)"
+command -v nft >/dev/null || { apt-get update && apt-get install -y nftables; }
+bash "$here/install-ops.sh"
 
 echo "[bootstrap] done — next: docker compose -f compose/docker-compose.yml up -d"

@@ -6,7 +6,7 @@
 #   GPUSTACK_ADMIN_PW    gpustack admin password (management API)
 # Optional env:
 #   SUDOROUTER_KEY       cloud upstream key (sudorouter.ai) — injected just-in-time
-#   NOVA_GATEWAY_SRC     nova-gateway source dir              (default ~/nova-gateway)
+#   NEW_API_SRC         sudoprivacy/new-api source dir       (default ~/new-api)
 #   MODEL_* / GPUSTACK_* overrides for deploy-model.sh / deploy-gpustack.sh
 #
 # Usage:  GPUSTACK_ADMIN_PW=... bash scripts/deploy.sh
@@ -16,15 +16,15 @@ here="$(cd "$(dirname "$0")" && pwd)"; repo="$(cd "$here/.." && pwd)"; cd "$repo
 GPUSTACK_URL="${GPUSTACK_URL:-http://127.0.0.1}"
 
 echo "== 1/6 build the router image =="
-scripts/build-nova-gateway.sh "${NOVA_GATEWAY_SRC:-$HOME/nova-gateway}"
+scripts/build-new-api.sh "${NEW_API_SRC:-$HOME/new-api}"
 
-echo "== 2/6 host layer (prerequisites + guardrails + TEE key) =="
+echo "== 2/6 host layer (prerequisites + guardrails + local credentials) =="
 sudo bash scripts/bootstrap.sh
 
 echo "== 3/6 gpustack (server + privileged worker) =="
 scripts/deploy-gpustack.sh
 
-echo "== 4/6 router (nova-gateway) =="
+echo "== 4/6 router (new-api) =="
 docker compose -f compose/docker-compose.yml up -d
 
 echo "== 5/6 model onto gpustack =="

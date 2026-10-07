@@ -1,10 +1,10 @@
-# sudoedge — the local router container (nova-gateway / sudorouter).
+# sudoedge — the local Router built from sudoprivacy/new-api.
 # gpustack is deployed separately by scripts/deploy-gpustack.sh: its
 # server + privileged-worker + join-token lifecycle can't be expressed in compose.
 #
 # Deploy order:
-#   1. scripts/build-nova-gateway.sh   → builds sudorouter:latest
-#   2. scripts/bootstrap.sh            → host guardrails + compose/.env (TEE_KEY)
+#   1. scripts/build-new-api.sh       → builds sudoedge-new-api:local
+#   2. scripts/bootstrap.sh            → host guardrails + local credentials
 #   3. scripts/deploy-gpustack.sh      → gpustack server + worker
 #   4. docker compose up -d            → the router
 #   5. scripts/deploy-model.sh         → deploy a model onto gpustack
@@ -13,15 +13,11 @@ name: sudoedge
 
 services:
   sudorouter:
-    image: sudorouter:latest                       # built from the nova-gateway repo by scripts/build-nova-gateway.sh
+    image: ${ROUTER_IMAGE:-sudoedge-new-api:local}
     restart: always
     network_mode: host                             # serves :3000; reaches gpustack at 127.0.0.1:80
     environment:
-      GENERATE_DEFAULT_TOKEN: "true"
       TZ: Asia/Shanghai
       ERROR_LOG_ENABLED: "true"
-      TEE_ADDR: ""
-      TEE_KEY: "${TEE_KEY:?missing compose/.env — run scripts/bootstrap.sh}"
-      TEE_UID: "0"
     tmpfs:
       - /data                                      # RAM-backed: no credential is written to the box's disk
