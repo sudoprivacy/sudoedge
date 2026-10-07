@@ -133,6 +133,9 @@ Image `quay.io/gpustack/gpustack`; GPU reaches containers via the nvidia contain
   tokens. The same turn produced a `POST /v1/chat/completions` entry in the
   `sudoedge-sudorouter-1` new-api log (model `qwen3-30b`, 7 seconds), proving
   the browser path reaches the local Router and GPUStack through `/model`.
+  A second session `37de752c-20fc-4646-a04b-96009b9e0e0e` omitted the runtime
+  field entirely; the persisted default `MOSS_DEFAULT_RUNTIME=cohost` selected
+  the same path and returned `DEFAULT_COHOST_OK` with `result.status=success`.
   Browser cancellation/reconnect and policy deny/redact checks remain separate
   acceptance.
   Cancellation returned `cancelled: true`.
