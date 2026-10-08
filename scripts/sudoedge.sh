@@ -20,7 +20,7 @@ connectivity() (
   flock 9
   [ "$mode" != restore ] || mode="$(read_mode)"
   case "$mode" in online|local) ;; *) echo 'Invalid persisted connectivity mode.' >&2; exit 2 ;; esac
-  rules="$(mktemp)"
+  rules="$(mktemp "$state_dir/.connectivity-rules.XXXXXXXX")"
   trap 'rm -f "$rules"' EXIT
   if nft list table inet sudoedge_egress >/dev/null 2>&1; then
     printf 'delete table inet sudoedge_egress\n' >> "$rules"

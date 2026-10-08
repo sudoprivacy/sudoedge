@@ -7,6 +7,9 @@ if [ "${1:-}" != inside ]; then
 fi
 export SUDOEDGE_STATE_DIR
 SUDOEDGE_STATE_DIR="$(mktemp -d)"
+# Early boot can replace or clean /tmp while this service is running.
+# Its rules must survive independently of the system temporary directory.
+export TMPDIR="$SUDOEDGE_STATE_DIR/unmounted-tmp"
 server=''
 trap 'if [ -n "$server" ]; then kill "$server" 2>/dev/null || true; fi; rm -rf "$SUDOEDGE_STATE_DIR"' EXIT
 ip link set lo up
