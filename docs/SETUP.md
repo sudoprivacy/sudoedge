@@ -2,7 +2,7 @@
 
 > SSH in? Read this first. Canonical box configuration lives here.
 > **Architecture & rationale**: the design doc on ShareOne
-> (`s.shareone.vip/s/sudo-stack-on-dgx-spark-she`). This runbook holds only
+> ([sudo-cloud-plan](https://s.shareone.vip/md/sudo-cloud-plan)). This runbook holds only
 > box-specific configuration; it references the design doc rather than repeating it.
 
 ## The box
@@ -35,130 +35,96 @@ Image `quay.io/gpustack/gpustack`; GPU reaches containers via the nvidia contain
   - `--max-model-len <N>` bounds context.
   - New `backend_parameters` take effect after `DELETE /v2/model-instances/{id}` (the scheduler recreates the instance from the spec).
 
-## Browser bring-up — 2026-10-02
+## Browser deployment and acceptance — 2026-10-09
 
-- Browser: **http://localhost:12808** on the Windows laptop, forwarded over SSH
-  to DGX loopback port 26808. `scripts/open-webui.ps1` installs the current-user
-  `SudoEdge-WebUI-12808` scheduled task with sign-in startup and automatic SSH
-  reconnect. The original temporary tunnel had exited; this caused the user's
-  unreachable page. Killing the replacement SSH child and rechecking HTTP
-  proved automatic recovery. Windows sign-out/reboot has not been tested.
-  Password-agent entry: **SudoEdge DGX WebUI**, username `admin`.
-- Deployment root: `~/sudo-dgx/bringup`. Local Moss dev `1925bbc` plus the
-  WebSocket first-message fix uses mTLS to the primary Nexus on 22140 (vault
-  and login) and a separate local mTLS identity to the cohost execution Nexus
-  on 22141. With `MOSS_DEFAULT_RUNTIME=cohost`, browser sessions use
-  `Moss → ManagedAgentService → in-process scode → Nexus /model → new-api →
-  GPUStack`; no per-session scode process is launched. The primary and
-  execution Nexus services are deliberately separate so the cohost acceptance
-  can be restarted without interrupting Moss authentication.
-- Sudowork base: `0c8a5bb9` plus the changes in the companion worktree
-  `test/edge-webui-bringup`: server execution labels, artifact history schema,
-  and removal of empty virtual chat rows. Image: `sudoedge-webui:edge-label`.
-- Local model: Qwen3-30B-A3B-Thinking-2507-FP8, vLLM 0.22.1,
-  context 65536, output limit 4096, GPU memory utilization 0.60,
-  `--tool-call-parser hermes --reasoning-parser qwen3`. Router publishes these
-  limits; `scode-with-catalog.py` supplies them explicitly to the released ACP
-  runtime before its first request. This is a deployment compatibility fix.
-- Service startup: user units `sudoedge-nexus` and `sudoedge-moss`, with user
-  lingering enabled; WebUI/Postgres restart through Docker. The system
-  `sudoedge-reconfigure` drop-in points at `bringup/edge/scripts` and refreshes
-  the local Moss Router key using `sync-moss-router.py`. Whole-box cold boot
-  has not been tested. The cloud Router key still requires provisioning after
-  RAM-backed Router state is recreated.
-- Operations: `sudoedge status`, `sudoedge webui status`, and
-  `sudo sudoedge connectivity local|online`; current mode is
-  `online`. The actual host and a Docker bridge container were unable to
-  connect to the public cloud in local mode. LAN browser access and model
-  inference continued; restarting the connectivity service retained local
-  mode. IPv4/IPv6 behavior also passed the isolated namespace test. The
-  installed entry point is `/usr/local/bin/sudoedge`; `sudoedge.service`
-  restores its saved mode at boot.
-- Qwen first-message fix, October 2: session
-  `38c1af4f-fe66-4d86-aa29-9eb3c631557a` never received its first prompt.
-  Moss completed the WebSocket handshake before attaching the runner and
-  installing its message handler. The fix attaches the runner first. A real
-  Node WebSocket regression failed before the fix and passed afterward;
-  all six process lifecycle tests pass. Changed-file lint passes and the
-  server typecheck remains at its existing 104-error baseline. The deployed
-  fix returned `qwen3-30b` in browser session
-  `deddc1f6-01a2-4be6-ac1b-cc5b09c67c69`. Fresh browser login and opening
-  that conversation from the sidebar also restored both messages visibly.
-  The original empty session is
-  terminated and was not restored by this new-session check.
-- Acceptance session: `78eb44be-6275-47e4-abce-482c6fb2e4de`. First browser
-  turn created a CSV and a result file with total 50. Follow-up turns exposed
-  model mistakes: a missing newline, then a stale result file despite claims
-  that it had been updated. Natural-language multi-turn task reliability has
-  **not passed**; file parsing is the acceptance check. A final explicit `awk`
-  command sent through the browser agent updated the file to 60, verified by
-  independently parsing the four CSV rows and reading the result file. This
-  confirms tool execution, while leaving autonomous task quality unresolved.
-  Session files remain under
-  `moss-home/server/runtime/sessions/<id>/workspace` for inspection.
-- Cloud production audit, October 2 evening (historical): Moss 0.1.46 and
-  gVisor pods used `moss-runtime:scode-0.2.21-handoff` with separate scode
-  processes, while cluster Nexus was 0.7.19. That audit predated the local
-  mailbox migration recorded below; changing a runtime image alone was never
-  sufficient.
-- The current **Sudo SaaS Demo (腾讯云 moss-server)** password-agent entry
-  successfully logs into cloud Moss through the DGX WebUI. Session
-  `0be68ba5-05ce-4028-9cc2-3cde7c73c137` created and read `cloud-check.txt`,
-  returning `CLOUD_OK_20261002`; reopening the browser restored the result.
-  This validates the current cloud session path, before cohost migration.
-- The shared session migration is actively owned by the Codex conversation
-  in `nexus-codex` (`01a0f7f7-63e8-7fd3-948f-98e7ef3121b3`, active October 2,
-  22:33 CST). Its worktrees include `moss-codex`,
-  `sudocode-codex-session-mailbox` and `sudowork-codex-session-mailbox`.
-  Its scope covers both hosts, streaming, tools, approvals, cancellation and
-  recovery. Sudocode PR #849 and nexus-vfs PR #377 separately cover durable
-  cohost resume. Coordinate deployment against those results.
-- Model mount acceptance: ARM64 cohost built from sudocode mailbox support
-  (nexus-vfs **0.8.0**, `nexusd-cohost` release binary) runs on loopback
-  **22141** with separate data
-  under `bringup/cohost-model-validation`. The existing browser Nexus on
-  22140 remained unchanged. ManagedAgentService started embedded session
-  `pid-e5a7915b14cf` (`os_pid: null`). Its Qwen config contains only
-  `nexus:///model`; the mount owns the Router credential and uses backend
-  `openai`, base URL `http://127.0.0.1:3000/v1`. The real agent replied through
-  `send`, then read a VFS fixture and wrote
-  `/agents/edge-model-agent/acceptance/result.json`. An independent read
-  asserted `{"batch":"EDGE-20261002","total":96}` (7 * 13 + 5).
-  Six completed model exchanges were observed in `/model/*.prompt` and
-  `.reply`, using `chat/completions`, model `qwen3-30b` and real tool calls.
-  This passes the embedded local model/file path. A fresh Moss browser session
-  `9fd73394-f9f4-44eb-a89d-01dc73e3bfd1` then selected
-  `runtime.type=cohost`, sent a WebSocket prompt, and returned
-  `COHOST_MODEL_OK` with `result.status=success` and 8,473 input / 253 output
-  tokens. The same turn produced a `POST /v1/chat/completions` entry in the
-  `sudoedge-sudorouter-1` new-api log (model `qwen3-30b`, 7 seconds), proving
-  the browser path reaches the local Router and GPUStack through `/model`.
-  A second session `37de752c-20fc-4646-a04b-96009b9e0e0e` omitted the runtime
-  field entirely; the persisted default `MOSS_DEFAULT_RUNTIME=cohost` selected
-  the same path and returned `DEFAULT_COHOST_OK` with `result.status=success`.
-  Browser cancellation/reconnect and policy deny/redact checks remain separate
-  acceptance.
-  Cancellation returned `cancelled: true`.
-  On October 3, `sudoedge-cohost-model.service` made the 22141 acceptance
-  runtime persistent, with an `ExecStartPost` hook that reattaches `/model`
-  over mTLS. Restarting the service automatically restored the route; new
-  embedded session `pid-96bddeeb6923` returned
-  `EDGE_MODEL_RESTART_OK qwen3-30b` at 08:14 CST through new-api.
-  `sudoedge-reconfigure.service` also refreshes the mount after provisioning
-  Router credentials. This is appliance provisioning; generic Nexus mount
-  replication/replay remains a component concern. The cohost service is
-  installed by `scripts/install-cohost.sh`; Moss must point its cohost Nexus
-  variables at 22141 and set `MOSS_DEFAULT_RUNTIME=cohost`.
-  Whole-machine cold boot is still untested.
+- Browser: **http://localhost:12808** on Windows, forwarded over SSH to DGX
+  loopback 26808. `scripts/open-webui.ps1` installs `SudoEdge-WebUI-12808`
+  with sign-in startup and automatic reconnect. Reconnect after killing its
+  SSH child and after DGX reboot passed. Actual Windows sign-out/reboot remains
+  untested. Password-agent entry: **SudoEdge DGX WebUI**, username `admin`.
+- Deployment root: `~/sudo-dgx/bringup`. Local Moss uses mTLS to primary Nexus
+  22140 for vault/login and separately to cohost execution Nexus 22141.
+  `MOSS_DEFAULT_RUNTIME=cohost` selects
+  `WebUI → Moss → ManagedAgentService → in-process scode → Nexus /model →
+  new-api → GPUStack`. Real browser answers and the corresponding Router
+  request passed. No per-session scode process is launched. The primary and
+  execution services have separate data/identity directories, so execution
+  restarts do not interrupt authentication.
+- Moss [#347](https://github.com/sudoprivacy/moss/pull/347) merged at `036a30f5`;
+  deployed ARM64 bundle source: `3b38b6eb`. It persists the native cohost ID in
+  `.moss/cohost-session.json`, resumes through ACP `session/load`, and routes
+  owner-verified workspace I/O through Nexus. Follow-up workspace and browser
+  recovery acceptance is still being completed.
+- Execution uses the green ARM64 release-build artifact of
+  [sudocode #903](https://github.com/sudoprivacy/sudocode/pull/903), source
+  `ae5cd369`, carrying Nexus **v0.8.2**, plugin ABI 7 and the egress gate.
+  SHA-256: `ded18b089bbba15adab73e0e4b96afa20c1334ba064bd3c0029175be6c81b727`.
+  Installed path:
+  `~/sudo-dgx/shared-assembly/cohost-ae5cd369682f/ci-release/nexusd-cohost-linux-arm64/nexusd-cohost`.
+  This is a PR build of merged code, not a new numbered cohost release.
+- Local model: Qwen3-30B-A3B-Thinking-2507-FP8, vLLM 0.22.1, context 65536,
+  output limit 4096, GPU memory utilization 0.60, `--tool-call-parser hermes`
+  and `--reasoning-parser qwen3`. Router advertises these capabilities. Execution
+  names `qwen3-30b` with `baseUrl=nexus:///model`; the mount owns the local-only key.
+- User units `sudoedge-nexus`, `sudoedge-cohost-model` and `sudoedge-moss` start
+  with lingering enabled. WebUI/Postgres and Presidio use Docker restart policies.
+  Root `sudoedge-reconfigure` provisions RAM-backed new-api state, refreshes
+  Moss's local Router key and restores the model mount.
+- Actual reboot `2026-10-08T16:00:05Z` restored services, online connectivity,
+  local credentials and the mount. Boot ID: `5c027e7c-152e-4759-b8de-64f5c07c87cc`.
+  [sudoedge #4](https://github.com/sudoprivacy/sudoedge/pull/4) fixes the early-boot
+  nftables temporary-file failure; its real IPv4/IPv6 namespace test passed.
+  A fresh history-dependent browser turn after reboot of the latest runtime and
+  cloud credential restoration are separate checks, beyond service readiness.
+- Operations: `sudoedge status`, `sudoedge webui status`,
+  `sudo sudoedge connectivity local|online`, `sudoedge model restore`.
+  Saved connectivity restores at boot. Real host/Docker WAN blocking, LAN WebUI,
+  local inference and IPv4/IPv6 regression passed. Current mode: `online`.
+- Last direct cloud-session acceptance: October 2. DGX WebUI logged into production
+  Moss and session `0be68ba5-05ce-4028-9cc2-3cde7c73c137` created/read `cloud-check.txt`,
+  returning `CLOUD_OK_20261002`. That audit used external scode. Re-audit the
+  deployed cloud route before claiming cohost migration complete.
+- Earlier local browser checks passed arithmetic across turns, visible history
+  after reload, cancellation and a fresh answer afterward. The CSV task in
+  `78eb44be-6275-47e4-abce-482c6fb2e4de` exposed model mistakes: a missing newline
+  and an unchanged result file. An explicit browser-issued `awk` command fixed
+  actual files to total 60. Autonomous task quality remains separate from
+  transport/tool execution acceptance.
+- gVisor is not installed on the box. Real agent A2A, artifact export governance
+  and Windows sign-in startup remain follow-up acceptance.
 
-Next: complete browser multi-turn/cancel/reconnect acceptance; consume the
-shared session migration for cloud and Edge and repeat the browser tasks;
-verify whole-box cold boot and cloud credential recovery. Real agent A2A
-and DLP follow these basic paths.
+## Content gate deployment
+
+Shared implementation/assembly lives in
+[`sudostack/security/egress-gate`](https://github.com/sudoprivacy/sudostack/tree/main/security/egress-gate),
+merged in [#31](https://github.com/sudoprivacy/sudostack/pull/31).
+Box-specific wiring and evidence live here.
+
+The installed execution cohost carries the gate. Its service drop-in sets
+`NEXUS_EGRESS_GATE_MODEL_MOUNTS=/cloud-model`, Presidio URL
+`http://127.0.0.1:59080`, entities `PERSON,LOCATION,ORGANIZATION`, timeout
+10000 ms. Container `sudoedge-presidio` uses `sudo-presidio-zh:local`, loopback
+binding, a 4 GiB cap and `restart=unless-stopped`; health returned 200.
+The cloud mount is not provisioned. These settings alone do not establish
+production cloud-prompt acceptance.
+
+The **same installed cohost artifact** passed all 40 shared harness assertions
+in isolation: real new-api/Qwen replies, redacted cloud-mount wire bytes,
+JSON-escaped Chinese input, intact local-mount bytes, stored redacted prompts
+and no raw fixtures in daemon audit logs. Evidence:
+`~/sudo-dgx/shared-assembly/egress-acceptance-ae5cd369-20261009/`.
+This run did not repeat the earlier CC red controls, deny policy or analyzer outage.
+
+Next: complete current browser recovery/file checks, repeat full-box reboot,
+then configure the cloud-only mount with encrypted bootstrap credentials and
+verify allow/redact/deny and analyzer outage. Cross-domain A2A must enter this
+box's kernel before federation to receive the gate; direct external-broker
+writes bypass it. Artifact exports also need a governed route. Neither path
+is accepted by the model-plane harness.
 
 Script checks: `sudo bash tests/connectivity.sh`,
 `python3 tests/model-config.py` and `python3 tests/router-config.py`.
-Keep all generated credentials outside git.
+Keep generated credentials outside git.
 
 ## new-api — local SudoRouter
 
@@ -202,7 +168,10 @@ bash scripts/configure.sh
   `qwen3-local` selects `http://127.0.0.1:3000/v1`; `qwen3-direct` selects GPUStack.
   Run `scode --auth api-key --model qwen3-local "<prompt>"` from a project directory.
 - Set `SUDOROUTER_KEY` and explicit `SUDOROUTER_MODELS` to configure an enabled
-  cloud channel in `default`. Channel base URL defaults to
+  cloud channel in `external`; the GPUStack channel is in `local`. Provisioning
+  creates separate `sudocode-local` and `sudocode-cloud` tokens with cross-group
+  retry disabled. The local token cannot select a cloud-only model, and a
+  failing GPUStack route cannot fall through to a cloud channel. Channel base URL defaults to
   `https://hk.sudorouter.ai` (the Router adds `/v1`). DGX currently has only
   the local channel. Cloud credentials and their cold-boot recovery remain open.
 - Acceptance: both a migrated database copy and fresh tmpfs initialization
@@ -213,6 +182,16 @@ bash scripts/configure.sh
   (`42`, then `50`), page reload with visible history, cancellation of a long
   generation over WebSocket, and a fresh same-session answer (`63`) afterward.
   The earlier CSV autonomous file-update quality case remains separate.
+
+October 9: the separate groups and tokens passed a real new-api integration
+check with the same model name in both channels. A local upstream failure
+produced zero cloud requests; a local token selecting a cloud-only model was
+rejected; the external token reached its designated cloud fixture. Evidence:
+`~/sudo-dgx/shared-assembly/router-separated-20261009/acceptance.json`.
+
+For the actual Qwen3.8 load/inference result and reproduction parameters, see
+[QWEN38.md](QWEN38.md). The experiment has stopped and the normal Qwen3 service
+is restored.
 
 ## Restore Nexus model mounts
 
