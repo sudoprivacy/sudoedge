@@ -5,7 +5,7 @@
 #               vLLM runner containers. It joins the server with a token the
 #               server mints at start, so this is a start -> read-token ->
 #               start-worker sequence (not expressible in a compose file — which
-#               is why gpustack lives here and only nova-gateway is in compose).
+#               is why gpustack lives here and only new-api is in compose).
 # Idempotent: reuses the box's existing gpustack-data volume (registry + weights).
 set -euo pipefail
 IMG="${GPUSTACK_IMAGE:-quay.io/gpustack/gpustack:latest}"
@@ -33,7 +33,7 @@ done
 
 if ! docker ps --format '{{.Names}}' | grep -qx gpustack-worker; then
   docker rm -f gpustack-worker 2>/dev/null || true
-  docker run -d --name gpustack-worker --restart unless-stopped --network host --privileged \
+  docker run -d --name gpustack-worker --restart unless-stopped --network host --privileged --gpus all \
     -v gpustack-data:/var/lib/gpustack -v /var/run/docker.sock:/var/run/docker.sock \
     "$IMG" --server-url "http://$ADDR" --token "$tok" \
     --advertise-address "$ADDR" --system-default-container-registry "$REGISTRY"

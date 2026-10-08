@@ -1,0 +1,112 @@
+"""Protect idempotent new-api provisioning and full-token retrieval."""
+import importlib.util
+import json
+import os
+from pathlib import Path
+import tempfile
+import threading
+import unittest
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from unittest.mock import patch
+
+
+class RouterConfigTest(unittest.TestCase):
+    def test_repeated_provisioning_preserves_cloud_and_retrieves_full_key(self):
+        state = {'ready': False, 'setup_count': 0, 'key_reads': 0,
+                 'metadata': {'cloud-model': {'context_window': 12345}}, 'ratios': {'cloud-model': 2},
+                 'channels': [{'id': 1, 'name': 'sudorouter-cloud', 'key': 'cloud-secret'}],
+                 'tokens': []}
+
+        class Router(BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.respond()
+
+            def do_POST(self):
+                self.respond()
+
+            def do_PUT(self):
+                self.respond()
+
+            def log_message(self, *_args):
+                pass
+
+            def respond(self):
+                size = int(self.headers.get('Content-Length', '0'))
+                body = json.loads(self.rfile.read(size)) if size else None
+                path = self.path.split('?')[0]
+                data = None
+                if path == '/api/setup':
+                    if body:
+                        state['ready'] = True
+                        state['setup_count'] += 1
+                    data = {'status': state['ready'], 'root_init': state['ready']}
+                elif path == '/api/user/login':
+                    data = {'access_token': 'admin-session', 'user': {'id': 1}}
+                else:
+                    if self.headers.get('Authorization') != 'Bearer admin-session':
+                        self.send_error(401)
+                        return
+                    if path == '/api/option/':
+                        if body and body['key'] == 'ModelMetadata':
+                            state['metadata'] = json.loads(body['value'])
+                        if body and body['key'] == 'ModelRatio':
+                            state['ratios'] = json.loads(body['value'])
+                        data = [{'key': 'ModelMetadata', 'value': json.dumps(state['metadata'])},
+                                {'key': 'ModelRatio', 'value': json.dumps(state['ratios'])}]
+                    elif path == '/api/channel/':
+                        if self.command == 'POST':
+                            state['channels'].append({'id': 2, **body['channel']})
+                        elif self.command == 'PUT':
+                            if 'status' in body:
+                                self.send_error(400)
+                                return
+                            state['channels'] = [body if c['id'] == body['id'] else c for c in state['channels']]
+                        data = {'items': state['channels']}
+                    elif path == '/api/channel/2/status':
+                        state['channels'][1]['status'] = body['status']
+                    elif path == '/api/token/':
+                        if body:
+                            state['tokens'].append({'id': 3, 'name': 'sudocode', 'status': 1, 'key': 'mask********key'})
+                        data = {'items': state['tokens']}
+                    elif path == '/api/token/3/key' and self.command == 'POST':
+                        state['key_reads'] += 1
+                        data = {'key': 'full-private-key'}
+                    else:
+                        self.send_error(404)
+                        return
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(json.dumps({'success': True, 'data': data}).encode())
+
+        server = HTTPServer(('127.0.0.1', 0), Router)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            spec = importlib.util.spec_from_file_location('configure_router', Path(__file__).resolve().parents[1] / 'scripts/configure-router.py')
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            with tempfile.TemporaryDirectory() as directory:
+                env = {'ROUTER_URL': f'http://127.0.0.1:{server.server_port}', 'GPUSTACK_KEY': 'gpu-key',
+                       'ADMIN_PW': 'test-password', 'SUDOEDGE_CONFIG_HOME': directory}
+                with patch.dict(os.environ, env):
+                    module.configure()
+                    module.configure()
+                config = json.loads((Path(directory) / 'sudocode.json').read_text())
+                self.assertEqual(config['auth_modes']['api-key']['sudorouter']['apiKey'], 'sk-full-private-key')
+                self.assertEqual(config['models']['qwen3-local']['contextWindow'], 65536)
+                self.assertEqual(state['setup_count'], 1)
+                self.assertEqual(len(state['tokens']), 1)
+                self.assertEqual(state['key_reads'], 2)
+                self.assertEqual(len(state['channels']), 2)
+                self.assertEqual(state['channels'][0]['key'], 'cloud-secret')
+                self.assertEqual(state['metadata']['cloud-model']['context_window'], 12345)
+                self.assertTrue(state['metadata']['qwen3-30b']['tool_calling_supported'])
+                self.assertEqual(state['ratios'], {'cloud-model': 2, 'qwen3-30b': 0})
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+
+
+if __name__ == '__main__':
+    unittest.main()

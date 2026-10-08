@@ -8,7 +8,10 @@
 secrets/
 
 # runtime data / state
-nova-gateway-data/
+router-data/
+node_modules/
+*.bundle.mjs
 *.db
 *.db-wal
 *.db-shm
+__pycache__/

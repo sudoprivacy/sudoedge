@@ -1,0 +1,5 @@
+{
+  "server": { "host": "127.0.0.1", "port": 26808 },
+  "publicOrigin": "http://localhost:12808",
+  "moss": { "baseUrl": "http://127.0.0.1:43127", "wsBaseUrl": "ws://127.0.0.1:43127" }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "sudoedge-nexus-setup",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@grpc/grpc-js": "1.14.0",
+    "@grpc/proto-loader": "0.8.0"
+  }
+}

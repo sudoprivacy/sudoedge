@@ -9,7 +9,7 @@
 #   MODEL_SOURCE        model_scope | huggingface | local_path (default model_scope)
 #   MODEL_ID            source id / repo / path           (default Qwen/Qwen3-30B-A3B-Thinking-2507-FP8)
 #   MODEL_BACKEND       (default vLLM)
-#   MODEL_MAX_LEN       context length                    (default 32768)
+#   MODEL_MAX_LEN       context length                    (default 65536)
 #   MODEL_BACKEND_PARAMS JSON array of vLLM flags
 #   GPUSTACK_URL        (default http://127.0.0.1)  GPUSTACK_CLUSTER_ID (default 1)
 set -euo pipefail
@@ -22,10 +22,11 @@ name = os.environ.get("MODEL_NAME", "qwen3-30b")
 src  = os.environ.get("MODEL_SOURCE", "model_scope")
 ref  = os.environ.get("MODEL_ID", "Qwen/Qwen3-30B-A3B-Thinking-2507-FP8")
 backend = os.environ.get("MODEL_BACKEND", "vLLM")
-maxlen  = int(os.environ.get("MODEL_MAX_LEN", "32768"))
+maxlen  = int(os.environ.get("MODEL_MAX_LEN", "65536"))
 cluster = int(os.environ.get("GPUSTACK_CLUSTER_ID", "1"))
-bparams = json.loads(os.environ.get("MODEL_BACKEND_PARAMS",
-  '["--gpu-memory-utilization","0.60","--max-model-len","32768","--enable-auto-tool-choice","--tool-call-parser","hermes"]'))
+bparams = json.loads(os.environ["MODEL_BACKEND_PARAMS"]) if "MODEL_BACKEND_PARAMS" in os.environ else [
+  "--gpu-memory-utilization", "0.60", "--max-model-len", str(maxlen),
+  "--enable-auto-tool-choice", "--tool-call-parser", "hermes", "--reasoning-parser", "qwen3"]
 
 cj = http.cookiejar.CookieJar(); op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
 def call(path, data=None, method=None):
