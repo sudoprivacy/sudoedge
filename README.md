@@ -70,9 +70,12 @@ cross-CA A2A channel. Local ShareOne and the content inspection gate still need
 deployment and acceptance; the current browser bring-up stores files in each
 session's local workspace.
 
-A model call is also an outbound transfer. Configured local and cloud model
-channels share the `default` group and are enabled by default. The appliance
-starts online; an operator can persistently stop public-network traffic:
+A model call is also an outbound transfer. The local GPU channel and its
+credential use the `local` group. Configured cloud channels remain enabled in
+the `external` group with a separate credential. The local credential cannot
+reach that group, including when both groups advertise the same model ID and
+the local GPU fails. The appliance starts online; an operator can persistently
+stop public-network traffic:
 
 ```bash
 sudo bash scripts/install-ops.sh
@@ -98,6 +101,14 @@ mode during boot. Shared component contracts and assembly belong in
 `status` checks service reachability; a healthy endpoint does not prove model
 quality or a cloud login. No cloud credential means no usable cloud channel,
 even when the network mode is online.
+
+`configure-router.py` preserves existing cloud channels while moving them to
+`external`, and removes the superseded shared token after writing the new
+credentials. It preserves unrelated client providers and Router model metadata.
+The `sudoedge-external` credential is reserved for a cloud model mount listed
+in `NEXUS_EGRESS_GATE_MODEL_MOUNTS`; it must never replace the local `/model`
+mount's `sudorouter` credential. Network connectivity and content filtering are
+separate controls.
 
 ## Browser access on DGX
 
