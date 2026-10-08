@@ -50,11 +50,21 @@ Image `quay.io/gpustack/gpustack`; GPU reaches containers via the nvidia contain
   request passed. No per-session scode process is launched. The primary and
   execution services have separate data/identity directories, so execution
   restarts do not interrupt authentication.
-- Moss [#347](https://github.com/sudoprivacy/moss/pull/347) merged at `036a30f5`;
-  deployed ARM64 bundle source: `3b38b6eb`. It persists the native cohost ID in
+- Moss [#347](https://github.com/sudoprivacy/moss/pull/347),
+  [#348](https://github.com/sudoprivacy/moss/pull/348) and
+  [#349](https://github.com/sudoprivacy/moss/pull/349) are merged;
+  deployed ARM64 bundle source: `0ac91283`. Bundle SHA-256:
+  `69fb888e45012660834d32e9eef100304f4b03ca72682795ce1c0d47b3e672a2`.
+  It persists the native cohost ID in
   `.moss/cohost-session.json`, resumes through ACP `session/load`, and routes
-  owner-verified workspace I/O through Nexus. Follow-up workspace and browser
-  recovery acceptance is still being completed.
+  owner-verified workspace I/O through Nexus. Fresh repositories use
+  `/agents/{agent}/workspaces/{Moss-session-id}`, independent of managed PID.
+  Older sessions without this locator retain their recorded repository identity.
+- Complete WebUI server/client image: `sudoedge-webui:handoff-73957978`, source
+  `73957978ddfa5c6fd3b192fedcc213bdf60ac915`, image ID
+  `sha256:695de69b2cc0584e56e42e18d4e51c021acf0d582e46a44d6b83bff604bd05ef`.
+  This includes the upstream reconnect fix; replacing only the frontend does
+  not update the server's session-lock behavior.
 - Execution uses the green ARM64 release-build artifact of
   [sudocode #903](https://github.com/sudoprivacy/sudocode/pull/903), source
   `ae5cd369`, carrying Nexus **v0.8.2**, plugin ABI 7 and the egress gate.
@@ -74,8 +84,16 @@ Image `quay.io/gpustack/gpustack`; GPU reaches containers via the nvidia contain
   local credentials and the mount. Boot ID: `5c027e7c-152e-4759-b8de-64f5c07c87cc`.
   [sudoedge #4](https://github.com/sudoprivacy/sudoedge/pull/4) fixes the early-boot
   nftables temporary-file failure; its real IPv4/IPv6 namespace test passed.
-  A fresh history-dependent browser turn after reboot of the latest runtime and
-  cloud credential restoration are separate checks, beyond service readiness.
+  A second reboot of the latest deployment changed the boot ID to
+  `2d1c9f28-7ae0-48cd-b31e-383f6d7f3b7a`. Local Qwen, WebUI, Moss, cohost,
+  Router credentials and model mount recovered automatically. In existing
+  session `9fad0824-7713-4584-9165-23d2096d65cc`, managed PID changed from
+  `pid-fadfd9668c0f` to `pid-a05e23c1db18`, native session ID stayed
+  `session-1791482406416-2`, and a fresh question answered `7397` from the
+  pre-reboot remembered `7395`. Browser reads returned the original 18-byte
+  `proof.txt` and 19-byte `uploaded.txt`, both HTTP 200. Evidence:
+  `~/sudo-dgx/shared-assembly/reboot-latest-20261009/`.
+  Cloud credential restoration remains untested because no cloud key is installed.
 - Operations: `sudoedge status`, `sudoedge webui status`,
   `sudo sudoedge connectivity local|online`, `sudoedge model restore`.
   Saved connectivity restores at boot. Real host/Docker WAN blocking, LAN WebUI,
@@ -90,6 +108,15 @@ Image `quay.io/gpustack/gpustack`; GPU reaches containers via the nvidia contain
   and an unchanged result file. An explicit browser-issued `awk` command fixed
   actual files to total 60. Autonomous task quality remains separate from
   transport/tool execution acceptance.
+- Latest real browser checks passed multi-turn answers, tool approval, file
+  preview, page reload and cancellation followed by a fresh answer. The captured
+  WebSocket sequence includes `stop`, upstream result and return to an idle
+  writer. Canonical Nexus paths passed agent Write/Read and authenticated WebUI
+  upload/read APIs. The upload API check does not cover the file-picker UI.
+  **Open filesystem defect:** writing through
+  `/proc/{pid}/workspace/{repo-alias}/...` can report success while no file is
+  created. Native alias resolution, kernel miss error propagation and model
+  workspace context must be fixed before declaring basic file tasks complete.
 - gVisor is not installed on the box. Real agent A2A, artifact export governance
   and Windows sign-in startup remain follow-up acceptance.
 
@@ -113,10 +140,15 @@ in isolation: real new-api/Qwen replies, redacted cloud-mount wire bytes,
 JSON-escaped Chinese input, intact local-mount bytes, stored redacted prompts
 and no raw fixtures in daemon audit logs. Evidence:
 `~/sudo-dgx/shared-assembly/egress-acceptance-ae5cd369-20261009/`.
-This run did not repeat the earlier CC red controls, deny policy or analyzer outage.
+This run did not repeat the earlier CC red controls. A separate real-driver
+negative-control run verified deny and analyzer outage against controlled
+loopback HTTP upstreams: denied cloud requests produced zero upstream calls;
+analyzer outage also blocked cloud calls; local PII remained intact and allowed.
+Evidence: `~/sudo-dgx/shared-assembly/egress-negative-r3-20261009/acceptance.json`.
+These controls do not establish production cloud-model acceptance.
 
-Next: complete current browser recovery/file checks, repeat full-box reboot,
-then configure the cloud-only mount with encrypted bootstrap credentials and
+Next: fix the native file alias and misleading write-success behavior, then
+configure the cloud-only mount with encrypted bootstrap credentials and
 verify allow/redact/deny and analyzer outage. Cross-domain A2A must enter this
 box's kernel before federation to receive the gate; direct external-broker
 writes bypass it. Artifact exports also need a governed route. Neither path
