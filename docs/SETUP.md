@@ -66,12 +66,17 @@ Image `quay.io/gpustack/gpustack`; GPU reaches containers via the nvidia contain
   This includes the upstream reconnect fix; replacing only the frontend does
   not update the server's session-lock behavior.
 - Execution uses the green ARM64 release-build artifact of
-  [sudocode #903](https://github.com/sudoprivacy/sudocode/pull/903), source
-  `ae5cd369`, carrying Nexus **v0.8.2**, plugin ABI 7 and the egress gate.
-  SHA-256: `ded18b089bbba15adab73e0e4b96afa20c1334ba064bd3c0029175be6c81b727`.
+  [sudocode #916](https://github.com/sudoprivacy/sudocode/pull/916), source
+  `592c7cb8`, carrying Nexus **v0.8.3**, plugin ABI 7 and the egress gate.
+  SHA-256: `09049e4a43a797544afa035232e82b6dbf04b547b65d3c8f8795a6d22fb61674`.
   Installed path:
-  `~/sudo-dgx/shared-assembly/cohost-ae5cd369682f/ci-release/nexusd-cohost-linux-arm64/nexusd-cohost`.
+  `~/sudo-dgx/shared-assembly/cohost-592c7cb8e839/ci-release/nexusd-cohost-linux-arm64/nexusd-cohost`.
   This is a PR build of merged code, not a new numbered cohost release.
+  Verified `/proc/1275447/exe` bytes at `2026-10-09T16:07:51Z` match that hash.
+  A stale `ExecStart` override had kept the old binary active despite the main
+  unit changing. The override was backed up and removed; execution state was
+  backed up without restoring or clearing it. Evidence:
+  `~/sudo-dgx/shared-assembly/cohost-592c7cb8e839/effective-upgrade-backup-20261009T160751Z/`.
 - Local model: Qwen3-30B-A3B-Thinking-2507-FP8, vLLM 0.22.1, context 65536,
   output limit 4096, GPU memory utilization 0.60, `--tool-call-parser hermes`
   and `--reasoning-parser qwen3`. Router advertises these capabilities. Execution
@@ -113,10 +118,16 @@ Image `quay.io/gpustack/gpustack`; GPU reaches containers via the nvidia contain
   WebSocket sequence includes `stop`, upstream result and return to an idle
   writer. Canonical Nexus paths passed agent Write/Read and authenticated WebUI
   upload/read APIs. The upload API check does not cover the file-picker UI.
-  **Open filesystem defect:** writing through
-  `/proc/{pid}/workspace/{repo-alias}/...` can report success while no file is
-  created. Native alias resolution, kernel miss error propagation and model
-  workspace context must be fixed before declaring basic file tasks complete.
+  **File acceptance remains open:** Nexus v0.8.3 resolves directory aliases;
+  #916 rejects unhandled kernel writes. The first deployment acceptance still
+  ran the old overridden binary. After actual activation, a fresh browser
+  task chose an unmounted path and correctly received an explicit write error,
+  then its model stream ended without an event. Moss's prompt also describes
+  a host directory rather than the Nexus repository. Correct that context and
+  verify real relative Write/Read/Edit bytes before declaring file tasks complete.
+  Existing `proof.txt` and `uploaded.txt` remain intact. The old browser runner
+  still holds a dead cohost connection after upgrade; authenticated session
+  recovery remains separate work, and no uncertain lock was cleared manually.
 - gVisor is not installed on the box. Real agent A2A, artifact export governance
   and Windows sign-in startup remain follow-up acceptance.
 
@@ -135,7 +146,7 @@ binding, a 4 GiB cap and `restart=unless-stopped`; health returned 200.
 The cloud mount is not provisioned. These settings alone do not establish
 production cloud-prompt acceptance.
 
-The **same installed cohost artifact** passed all 40 shared harness assertions
+The **#903 cohost artifact** passed all 40 shared harness assertions
 in isolation: real new-api/Qwen replies, redacted cloud-mount wire bytes,
 JSON-escaped Chinese input, intact local-mount bytes, stored redacted prompts
 and no raw fixtures in daemon audit logs. Evidence:
@@ -147,6 +158,14 @@ analyzer outage also blocked cloud calls; local PII remained intact and allowed.
 Evidence: `~/sudo-dgx/shared-assembly/egress-negative-r3-20261009/acceptance.json`.
 These controls do not establish production cloud-model acceptance.
 
+The 40 assertions use a small set of synthetic prompts. The test mount named
+as a cloud route still reaches local Qwen; it does not call a production cloud
+provider. Chinese business-text precision/recall, artifact exports, OCR and
+real cross-domain agent traffic remain unaccepted. No Yige Cloud API adapter
+is installed. Nexus owns the gate; the loopback Presidio service supplies
+Chinese named entities, and `sudostack/security/egress-gate/` owns the shared
+assembly and test contract. new-api owns model routes and token groups.
+
 Next: fix the native file alias and misleading write-success behavior, then
 configure the cloud-only mount with encrypted bootstrap credentials and
 verify allow/redact/deny and analyzer outage. Cross-domain A2A must enter this
@@ -154,7 +173,13 @@ box's kernel before federation to receive the gate; direct external-broker
 writes bypass it. Artifact exports also need a governed route. Neither path
 is accepted by the model-plane harness.
 
-Script checks: `sudo bash tests/connectivity.sh`,
+The cohost installer stages binary replacement atomically and checks the running
+main process hash. It reports failure if an override or an already running old
+process prevents activation. Inspect the effective unit with `systemctl --user cat`
+and restart only after managed sessions are idle; installing does not interrupt
+an existing session automatically.
+
+Script checks: `python3 tests/cohost-install.py`, `sudo bash tests/connectivity.sh`,
 `python3 tests/model-config.py` and `python3 tests/router-config.py`.
 Keep generated credentials outside git.
 
