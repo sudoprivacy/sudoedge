@@ -2,7 +2,7 @@
 
 > SSH in? Read this first. Canonical box configuration lives here.
 > **Architecture & rationale**: the design doc on ShareOne
-> ([sudo-cloud-plan](https://s.shareone.vip/md/sudo-cloud-plan)). This runbook holds only
+> ([sudo-cloud-plan](https://s.shareone.vip/s/sudo-cloud-plan)). This runbook holds only
 > box-specific configuration; it references the design doc rather than repeating it.
 
 ## The box
@@ -35,7 +35,7 @@ Image `quay.io/gpustack/gpustack`; GPU reaches containers via the nvidia contain
   - `--max-model-len <N>` bounds context.
   - New `backend_parameters` take effect after `DELETE /v2/model-instances/{id}` (the scheduler recreates the instance from the spec).
 
-## Browser deployment and acceptance — 2026-10-09
+## Browser deployment and acceptance — 2026-10-10
 
 - Browser: **http://localhost:12808** on Windows, forwarded over SSH to DGX
   loopback 26808. `scripts/open-webui.ps1` installs `SudoEdge-WebUI-12808`
@@ -51,20 +51,36 @@ Image `quay.io/gpustack/gpustack`; GPU reaches containers via the nvidia contain
   execution services have separate data/identity directories, so execution
   restarts do not interrupt authentication.
 - Moss [#347](https://github.com/sudoprivacy/moss/pull/347),
-  [#348](https://github.com/sudoprivacy/moss/pull/348) and
-  [#349](https://github.com/sudoprivacy/moss/pull/349) are merged;
-  deployed ARM64 bundle source: `0ac91283`. Bundle SHA-256:
-  `69fb888e45012660834d32e9eef100304f4b03ca72682795ce1c0d47b3e672a2`.
+  [#348](https://github.com/sudoprivacy/moss/pull/348),
+  [#349](https://github.com/sudoprivacy/moss/pull/349) and
+  [#352](https://github.com/sudoprivacy/moss/pull/352) are merged;
+  deployed ARM64 bundle source: `2ff81bb3a9d2f7fdefd013c88335ef225b9ab7bf`.
+  Server bundle SHA-256:
+  `f1b8b1b5fcfebf4f4c0a80fb7be9526cd220da251ca80caf8bf88b14980b9eb4`.
   It persists the native cohost ID in
   `.moss/cohost-session.json`, resumes through ACP `session/load`, and routes
   owner-verified workspace I/O through Nexus. Fresh repositories use
   `/agents/{agent}/workspaces/{Moss-session-id}`, independent of managed PID.
   Older sessions without this locator retain their recorded repository identity.
-- Complete WebUI server/client image: `sudoedge-webui:handoff-73957978`, source
-  `73957978ddfa5c6fd3b192fedcc213bdf60ac915`, image ID
-  `sha256:695de69b2cc0584e56e42e18d4e51c021acf0d582e46a44d6b83bff604bd05ef`.
-  This includes the upstream reconnect fix; replacing only the frontend does
-  not update the server's session-lock behavior.
+  The execution prompt uses the Nexus repository instead of the host transcript
+  directory. Live and stored tool results retain actual output and error status;
+  transcript appends are ordered and drained before transport close. All seven
+  PR checks and the post-merge branch checks passed. Deployment backup:
+  `~/sudo-dgx/shared-assembly/moss-workspace-context-20261010/deployment-backup-20261009T171026Z/`.
+- Complete WebUI server/client image: `sudoedge-webui:handoff-73691345`, source
+  `73691345f20032ec8d5d23ca6244552a45bee68f`, image ID
+  `sha256:5cba7445991475547907237f7edf884df46f62e88e5be72a53fe3f86c3b70683`.
+  [Sudowork #1222](https://github.com/sudoprivacy/sudowork/pull/1222) merged after
+  all latest checks passed: 32 successful and one expected skip. It forwards
+  actual tool results and artifact events, retains failed status, and preserves
+  whitespace in streamed text. Desktop tests: 3149 passed, 36 conditional skips;
+  Linux WebUI tests: 219 unit, 44 contract and 81 real PostgreSQL integration.
+  The deployed container's effective image and module exports were checked.
+  Upgrade started with zero active browser writers and backed up PostgreSQL:
+  `~/sudo-dgx/shared-assembly/webui-cohost-events-20261010/deployment-backup-20261009T183520Z/`.
+  Its dump SHA-256 is
+  `3f25c7d427aa836b29947a7505c9965dd1e06f2f912c1f9f144640c3d91b450e`.
+  Replacing only the frontend does not update the server's session-lock behavior.
 - Execution uses the green ARM64 release-build artifact of
   [sudocode #916](https://github.com/sudoprivacy/sudocode/pull/916), source
   `592c7cb8`, carrying Nexus **v0.8.3**, plugin ABI 7 and the egress gate.
@@ -113,21 +129,43 @@ Image `quay.io/gpustack/gpustack`; GPU reaches containers via the nvidia contain
   and an unchanged result file. An explicit browser-issued `awk` command fixed
   actual files to total 60. Autonomous task quality remains separate from
   transport/tool execution acceptance.
-- Latest real browser checks passed multi-turn answers, tool approval, file
-  preview, page reload and cancellation followed by a fresh answer. The captured
-  WebSocket sequence includes `stop`, upstream result and return to an idle
-  writer. Canonical Nexus paths passed agent Write/Read and authenticated WebUI
-  upload/read APIs. The upload API check does not cover the file-picker UI.
-  **File acceptance remains open:** Nexus v0.8.3 resolves directory aliases;
-  #916 rejects unhandled kernel writes. The first deployment acceptance still
-  ran the old overridden binary. After actual activation, a fresh browser
-  task chose an unmounted path and correctly received an explicit write error,
-  then its model stream ended without an event. Moss's prompt also describes
-  a host directory rather than the Nexus repository. Correct that context and
-  verify real relative Write/Read/Edit bytes before declaring file tasks complete.
-  Existing `proof.txt` and `uploaded.txt` remain intact. The old browser runner
-  still holds a dead cohost connection after upgrade; authenticated session
-  recovery remains separate work, and no uncertain lock was cleared manually.
+- **Relative file tools passed with explicit model tool parameters:** real
+  browser session `6ac0536e-8962-4b4c-8adf-264c68afcc52` used Write/Read/Edit/Read
+  on `workspace/proof-r6-20261010.txt`. Owner-authenticated independent reads of
+  both the canonical repository and the managed process alias returned the same
+  15 bytes, `r6-revised-7400`. Native session: `session-1791565875461-3`;
+  managed PID: `pid-e52ff500b710`. The first natural-language request chose the
+  wrong filename and empty content; that remains a model task-quality failure.
+  The tools correctly reported the actual missing-file error and empty write.
+  Nexus v0.8.3 resolves the directory alias; #916 rejects unhandled kernel writes.
+- Browser cancellation reached a terminal result, and a following question
+  recalled the revised file content. Reloading the idle session retained history.
+  A separate cancellation after actual text deltas arrived also reached a
+  terminal result. These checks cover user cancellation and idle reconnect;
+  running-process crash recovery remains open. Browser text lives in Markdown
+  Shadow DOM, so acceptance reads that DOM and inspects screenshots rather than
+  relying on the outer document's text alone.
+  Native/path evidence:
+  `~/sudo-dgx/shared-assembly/moss-workspace-context-20261010/file-r6-native-and-paths.jsonl`.
+  Browser evidence on the Windows workstation:
+  `%LOCALAPPDATA%/Temp/sudoedge-handoff-20261008/file-r6-explicit-browser.json`,
+  `file-r6-cancel-resume-browser.json` and `file-r6-active-cancel-browser.json`.
+- **Live tool output display passed after the WebUI upgrade:** the same browser
+  session resumed and actually read the fixture, then a deliberately absent file.
+  WebSocket results matched the rendered Output panels byte for byte. The first
+  displayed `r6-revised-7400` inside the tool's file-result JSON; the second
+  displayed `FileNotFound` with the failed status. Both remained visible after
+  opening the tool details. The turn reached a successful terminal result.
+  Managed PID for this resumed turn: `pid-54544c84d065`. This idle-session resume
+  does not establish recovery of an uncertain writer. Evidence:
+  `%LOCALAPPDATA%/Temp/sudoedge-handoff-20261008/file-r6-tool-output-acceptance.json`,
+  `file-r6-tool-output-browser.json` and `file-r6-tool-output-browser.png`.
+- Existing `proof.txt`, `uploaded.txt` and all session history remain intact.
+  Older runners with dead cohost connections and `LOCK_UNCERTAIN` sessions still
+  need authenticated recovery. Recovery must prove the previous writer stopped
+  or is fenced before releasing its lock, and must not replay prompts. No
+  uncertain lock was cleared manually. Earlier canonical-path upload/read API
+  checks do not cover the browser file-picker UI.
 - gVisor is not installed on the box. Real agent A2A, artifact export governance
   and Windows sign-in startup remain follow-up acceptance.
 
@@ -141,7 +179,7 @@ Box-specific wiring and evidence live here.
 The installed execution cohost carries the gate. Its service drop-in sets
 `NEXUS_EGRESS_GATE_MODEL_MOUNTS=/cloud-model`, Presidio URL
 `http://127.0.0.1:59080`, entities `PERSON,LOCATION,ORGANIZATION`, timeout
-10000 ms. Container `sudoedge-presidio` uses `sudo-presidio-zh:local`, loopback
+10000 ms. Container `sudoedge-presidio` uses `sudo-presidio-zh:handoff-16a1325`, loopback
 binding, a 4 GiB cap and `restart=unless-stopped`; health returned 200.
 The cloud mount is not provisioned. These settings alone do not establish
 production cloud-prompt acceptance.
@@ -158,6 +196,28 @@ analyzer outage also blocked cloud calls; local PII remained intact and allowed.
 Evidence: `~/sudo-dgx/shared-assembly/egress-negative-r3-20261009/acceptance.json`.
 These controls do not establish production cloud-model acceptance.
 
+[sudostack #33](https://github.com/sudoprivacy/sudostack/pull/33) merged after
+all five latest CI checks passed, including real analyzer tests. It fixes
+organization scores being reduced to `0.34`, below the gate's default `0.5`
+threshold. The old deployed analyzer missed both synthetic company names; the
+corrected analyzer passes six cases covering people, companies, a location and
+ordinary technical prose. The existing shared contract suite passes 139 tests.
+The exact final-head ARM image is now deployed; effective image ID:
+`sha256:7f92543ee226773103fd7bdc34b8cf390044795c186df2762ef5351a2cb852d7`.
+Its configuration hashes match commit `16a132536c9fd996c1692c55a673a83800cbcf68`,
+and the same six checks passed against the active loopback service. This upgrade
+kept the memory limit and restart policy and did not restart Moss or cohost.
+Deployment and rollback record:
+`~/sudo-dgx/shared-assembly/ner-scores-release-16a1325-20261010/deployment.json`.
+
+An isolated test using the currently installed #916 cohost binary checked actual
+OpenAI-driver wire bytes: the old analyzer forwarded a synthetic company name,
+the corrected one redacted it, denial made zero requests for the blocked company,
+and analyzer outage made zero cloud-fixture requests. A separately allowed
+`Hello` request passed under deny policy. Local-mount bytes stayed intact.
+This upstream was a controlled loopback HTTP fixture. Evidence:
+`~/sudo-dgx/shared-assembly/ner-scores-20261010/wire-v2/acceptance.json`.
+
 The 40 assertions use a small set of synthetic prompts. The test mount named
 as a cloud route still reaches local Qwen; it does not call a production cloud
 provider. Chinese business-text precision/recall, artifact exports, OCR and
@@ -166,8 +226,8 @@ is installed. Nexus owns the gate; the loopback Presidio service supplies
 Chinese named entities, and `sudostack/security/egress-gate/` owns the shared
 assembly and test contract. new-api owns model routes and token groups.
 
-Next: fix the native file alias and misleading write-success behavior, then
-configure the cloud-only mount with encrypted bootstrap credentials and
+Next: finish safe session recovery, then configure the cloud-only mount with
+encrypted bootstrap credentials and
 verify allow/redact/deny and analyzer outage. Cross-domain A2A must enter this
 box's kernel before federation to receive the gate; direct external-broker
 writes bypass it. Artifact exports also need a governed route. Neither path
