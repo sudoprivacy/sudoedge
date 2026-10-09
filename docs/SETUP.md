@@ -179,7 +179,7 @@ Box-specific wiring and evidence live here.
 The installed execution cohost carries the gate. Its service drop-in sets
 `NEXUS_EGRESS_GATE_MODEL_MOUNTS=/cloud-model`, Presidio URL
 `http://127.0.0.1:59080`, entities `PERSON,LOCATION,ORGANIZATION`, timeout
-10000 ms. Container `sudoedge-presidio` uses `sudo-presidio-zh:handoff-16a1325`, loopback
+10000 ms. Container `sudoedge-presidio` uses `sudo-presidio-zh:startup-e52035e`, loopback
 binding, a 4 GiB cap and `restart=unless-stopped`; health returned 200.
 The cloud mount is not provisioned. These settings alone do not establish
 production cloud-prompt acceptance.
@@ -202,13 +202,19 @@ organization scores being reduced to `0.34`, below the gate's default `0.5`
 threshold. The old deployed analyzer missed both synthetic company names; the
 corrected analyzer passes six cases covering people, companies, a location and
 ordinary technical prose. The existing shared contract suite passes 139 tests.
-The exact final-head ARM image is now deployed; effective image ID:
-`sha256:7f92543ee226773103fd7bdc34b8cf390044795c186df2762ef5351a2cb852d7`.
-Its configuration hashes match commit `16a132536c9fd996c1692c55a673a83800cbcf68`,
-and the same six checks passed against the active loopback service. This upgrade
-kept the memory limit and restart policy and did not restart Moss or cohost.
-Deployment and rollback record:
-`~/sudo-dgx/shared-assembly/ner-scores-release-16a1325-20261010/deployment.json`.
+[sudostack #34](https://github.com/sudoprivacy/sudostack/pull/34) fixes the
+Gunicorn 25.1.0 worker startup deadlock found in #33's post-merge analyzer CI.
+It disables the unused control socket in the shared image and tests three fresh
+starts with six real recognition checks each. All five latest PR checks passed
+before merge; 139 local contract tests and 18 ARM startup/recognition checks
+passed. The exact final-head image is deployed; effective image ID:
+`sha256:41f2043a9610d7e75291a899a8fe47dc0e7c49ee13da888d8d0e6dc6ea4e3e31`.
+Its configuration hashes match commit `e52035e7bd3b978b50a5814de8d95d23e7ae6426`,
+the control socket is absent, and six checks passed against the active loopback
+service. This upgrade kept the memory limit and restart policy and did not
+restart Moss or cohost. Deployment and rollback records:
+`~/sudo-dgx/shared-assembly/ner-scores-release-16a1325-20261010/deployment.json`
+and `~/sudo-dgx/shared-assembly/analyzer-startup-e52035e-20261010/deployment.json`.
 
 An isolated test using the currently installed #916 cohost binary checked actual
 OpenAI-driver wire bytes: the old analyzer forwarded a synthetic company name,
