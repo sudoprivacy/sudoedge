@@ -390,3 +390,51 @@ alone do not establish that acceptance.
 
 Shared design: [Nexus authentication](https://s.shareone.vip/s/nexus-auth-architecture)
 and [federation runbook](https://s.shareone.vip/s/federation-cross-machine-runbook).
+
+## Shared business DLP acceptance — October 12
+
+The shared business-policy assembly is [sudostack #37](https://github.com/sudoprivacy/sudostack/pull/37),
+candidate `ea94c85047b45c380005eb970e86b2c930c3322c`. Its deployment and reproducible
+acceptance commands live in `security/egress-gate/COMPOSITION.md` there. Presidio
+remains upstream; customer lists and public-company exceptions are deployment
+configuration loaded at analyzer startup. The tested policy is synthetic, not a
+customer configuration.
+
+On DGX, the candidate analyzer image is `sudo-presidio-zh:business-ea94c85`, image
+ID `sha256:788955afbad55428d73bb87b9fbda2071ad9ae7e1ffec5e2ad23239fde9dc9e4`.
+Its policy identity was
+`776b61df5338bf37bbc6c6232f57302a393508722db376ac6fb585ca318f36e1`.
+The test daemon was the accepted ARM64 cohost build from sudocode #916, SHA-256
+`09049e4a43a797544afa035232e82b6dbf04b547b65d3c8f8795a6d22fb61674`.
+
+The isolated test used actual mTLS VFS writes, the real Nexus gate, a recording
+endpoint, production `https://api.sudorouter.ai`, and cloud `gpt-4.1-mini`.
+The local control used local new-api/GPUStack `qwen3-30b`. Each accepted write
+waited for a model completion. No model credential was printed or included in
+captures.
+
+| Mode | Cloud requests | Accepted behavior |
+|---|---:|---|
+| Redact | 5 | Customer terms and marked customer records were redacted in ordinary/escaped JSON; public company and clean requests were allowed |
+| Deny | 2 | Only public-company and clean requests reached the cloud; three sensitive writes emitted zero requests |
+| Analyzer unavailable | 0 | The cloud write was refused before any request |
+
+All three modes retained the original synthetic terms on the local GPU route.
+Shared Compose deployment and forced container recreation also passed policy
+identity and business behavior checks. The test containers/units were stopped;
+the existing WebUI, Moss, cohost and production analyzer were preserved.
+
+Evidence is under
+`~/sudo-dgx/shared-assembly/dlp-business-ea94c85-20261012/`:
+`source-pins.json`, `wire-router-cloud/acceptance.json`, the synthetic wire
+captures and `compose-acceptance.json`. Earlier runs also exercised a synthetic
+model endpoint and the local Router/model; the final candidate above was retested
+against the real cloud model after policy-file validation changed.
+
+This proves the candidate's **model write path in isolated daemons**. It does
+not establish a persistent production `/cloud-model` mount, external Router
+credential recovery, a browser session selecting that cloud mount, actual A2A,
+or artifact export. The existing general Chinese NER baseline remains below an
+acceptable quality bar; business policy fixtures do not establish corpus recall.
+Continue to use the shared public corpus evaluation plus independently annotated
+business positives/negatives before admitting general DLP.
