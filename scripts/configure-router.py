@@ -39,7 +39,7 @@ def configure() -> None:
         try:
             setup = call('/api/setup')
             break
-        except (urllib.error.URLError, TimeoutError):
+        except (urllib.error.URLError, TimeoutError, ConnectionResetError):
             if attempt == 29:
                 raise
             time.sleep(2)

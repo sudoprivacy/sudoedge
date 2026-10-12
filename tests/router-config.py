@@ -2,17 +2,18 @@
 import importlib.util
 import json
 import os
+import socket
 from pathlib import Path
 import tempfile
 import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 
 class RouterConfigTest(unittest.TestCase):
     def test_repeated_provisioning_preserves_cloud_and_retrieves_full_key(self):
-        state = {'ready': False, 'setup_count': 0, 'key_reads': 0,
+        state = {'ready': False, 'setup_count': 0, 'key_reads': 0, 'setup_disconnects': 0,
                  'metadata': {'cloud-model': {'context_window': 12345}}, 'ratios': {'cloud-model': 2},
                  'groups': {'default': 1, 'custom': 2}, 'usable': {'custom': 'Existing group'},
                  'channels': [{'id': 1, 'name': 'sudorouter-cloud', 'key': 'cloud-secret', 'status': 1,
@@ -41,6 +42,11 @@ class RouterConfigTest(unittest.TestCase):
                 path = self.path.split('?')[0]
                 data = None
                 if path == '/api/setup':
+                    if self.command == 'GET' and state['setup_disconnects'] < 2:
+                        state['setup_disconnects'] += 1
+                        self.connection.shutdown(socket.SHUT_RDWR)
+                        self.connection.close()
+                        return
                     if body:
                         state['ready'] = True
                         state['setup_count'] += 1
@@ -105,17 +111,19 @@ class RouterConfigTest(unittest.TestCase):
             with tempfile.TemporaryDirectory() as directory:
                 env = {'ROUTER_URL': f'http://127.0.0.1:{server.server_port}', 'GPUSTACK_KEY': 'gpu-key',
                        'ADMIN_PW': 'test-password', 'SUDOEDGE_CONFIG_HOME': directory}
-                with patch.dict(os.environ, env):
+                with patch.dict(os.environ, env), patch.object(module.time, 'sleep') as sleep:
                     path = Path(directory) / 'sudocode.json'
                     path.write_text(json.dumps({'auth_modes': {'api-key': {'nexus': {'endpoint': 'nexus:///model'}}}}))
                     module.configure()
                     module.configure()
+                    self.assertEqual(sleep.call_count, 2)
                 config = json.loads((Path(directory) / 'sudocode.json').read_text())
                 self.assertEqual(config['auth_modes']['api-key']['sudorouter']['apiKey'], 'sk-full-private-key-2')
                 self.assertEqual(config['auth_modes']['api-key']['sudoedge-external']['apiKey'], 'sk-full-private-key-3')
                 self.assertEqual(config['auth_modes']['api-key']['nexus'], {'endpoint': 'nexus:///model'})
                 self.assertEqual(config['models']['qwen3-local']['contextWindow'], 65536)
                 self.assertEqual(state['setup_count'], 1)
+                self.assertEqual(state['setup_disconnects'], 2)
                 self.assertEqual([(t['name'], t['group'], t['cross_group_retry']) for t in state['tokens']],
                                  [('sudocode-local', 'local', False), ('sudocode-cloud', 'external', False)])
                 self.assertEqual(state['key_reads'], 4)
@@ -132,6 +140,20 @@ class RouterConfigTest(unittest.TestCase):
             server.shutdown()
             server.server_close()
             thread.join()
+
+    def test_persistent_setup_reset_stops_before_any_mutating_request(self):
+        spec = importlib.util.spec_from_file_location('configure_router', Path(__file__).resolve().parents[1] / 'scripts/configure-router.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        client = MagicMock()
+        client.open.side_effect = ConnectionResetError('Synthetic startup connection reset')
+        env = {'ROUTER_URL': 'http://127.0.0.1:1', 'GPUSTACK_KEY': 'gpu-key', 'ADMIN_PW': 'test-password'}
+        with patch.dict(os.environ, env), patch.object(module.urllib.request, 'build_opener', return_value=client), patch.object(module.time, 'sleep') as sleep:
+            with self.assertRaises(ConnectionResetError):
+                module.configure()
+        self.assertEqual(client.open.call_count, 30)
+        self.assertEqual(sleep.call_count, 29)
+        self.assertTrue(all(call.args[0].get_method() == 'GET' and call.args[0].full_url.endswith('/api/setup') for call in client.open.call_args_list))
 
 
 if __name__ == '__main__':
