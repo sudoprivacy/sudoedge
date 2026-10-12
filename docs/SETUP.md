@@ -438,3 +438,22 @@ or artifact export. The existing general Chinese NER baseline remains below an
 acceptable quality bar; business policy fixtures do not establish corpus recall.
 Continue to use the shared public corpus evaluation plus independently annotated
 business positives/negatives before admitting general DLP.
+
+The follow-up acceptance also passed the appliance Router hop:
+`cohost/Nexus gate → new-api external group → production SudoRouter → gpt-4.1-mini`.
+The local control used the same temporary new-api instance's `local` group and
+real GPUStack/Qwen, through a node-local forwarding proxy. Configuration came
+from sudoedge `62a931253bb60d974eafad142d6f118c826d8d58` (the startup-reset fix in
+#12), with distinct local/external tokens and cross-group retry disabled.
+Using the local token for the cloud-only model returned HTTP 400. Redact,
+deny and analyzer-outage again yielded 5, 2 and 0 cloud requests, respectively;
+every local control retained the synthetic customer terms and completed.
+
+This used a loopback-published new-api container with `/data` on tmpfs and
+its generated credential configuration in `/dev/shm`; both were cleaned up.
+The existing production Router was preserved. The Router image ID was
+`sha256:09e2e013908973a1eea98f059c5843f5eab5fe10a4501b10b31579faf455643d`.
+Evidence: `two-tier-router-acceptance.json` and `wire-two-tier-router/` in the
+same assembly directory above. The entire test directory audit found no
+literal current upstream cloud key; this is not a cold-boot credential-recovery
+acceptance. The persistent browser cloud path remains the next integration step.
