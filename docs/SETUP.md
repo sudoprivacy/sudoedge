@@ -439,21 +439,42 @@ acceptable quality bar; business policy fixtures do not establish corpus recall.
 Continue to use the shared public corpus evaluation plus independently annotated
 business positives/negatives before admitting general DLP.
 
-The follow-up acceptance also passed the appliance Router hop:
+The final acceptance of both business families used the corrected credential
+and visible-reply runner from [sudostack #39](https://github.com/sudoprivacy/sudostack/pull/39),
+revision `4cc0cc39c327078a11f5d21092ff2d72325ddfce`. It passed the appliance Router hop:
 `cohost/Nexus gate → new-api external group → production SudoRouter → gpt-4.1-mini`.
 The local control used the same temporary new-api instance's `local` group and
 real GPUStack/Qwen, through a node-local forwarding proxy. Configuration came
 from sudoedge `62a931253bb60d974eafad142d6f118c826d8d58` (the startup-reset fix in
 #12), with distinct local/external tokens and cross-group retry disabled.
-Using the local token for the cloud-only model returned HTTP 400. Redact,
-deny and analyzer-outage again yielded 5, 2 and 0 cloud requests, respectively;
-every local control retained the synthetic customer terms and completed.
+Using the local token for the cloud-only model returned HTTP 400. The model
+mounts used their own credentials; the recording proxy verified and forwarded
+Authorization unchanged. Deliberately mounting the external credential on the
+local route failed before cloud traffic. Redact, deny and analyzer-outage yielded
+8, 2 and 0 cloud requests, respectively. Each allowed write produced visible
+reply text. Every local control retained the original customer/contact terms
+and synthetic credential. The thinking Qwen channel used the existing production
+output budget of 4096; an earlier 256-token test cap produced an empty length
+termination, which correctly failed the strengthened acceptance.
+
+Fourteen analyzer fixtures cover customer/contact/contract data and internal
+source/design records, with public-company, source-example and ordinary-discussion
+negatives. A source credential without a classification marker is also tested on
+the actual wire. The new synthetic policy identity is
+`2dc2c5ae8d512ce15bb521be31de23fac1ed9e68b758fdbce17c28807cdba929`;
+the analyzer image above is unchanged. Explicit classification fixtures remain
+distinct from statistical recognition quality on unlabelled business content.
 
 This used a loopback-published new-api container with `/data` on tmpfs and
 its generated credential configuration in `/dev/shm`; both were cleaned up.
 The existing production Router was preserved. The Router image ID was
 `sha256:09e2e013908973a1eea98f059c5843f5eab5fe10a4501b10b31579faf455643d`.
-Evidence: `two-tier-router-acceptance.json` and `wire-two-tier-router/` in the
-same assembly directory above. The entire test directory audit found no
-literal current upstream cloud key; this is not a cold-boot credential-recovery
+Evidence: `two-tier-router-acceptance-v4.json`, `wire-two-tier-router-v4/`,
+`wire-two-tier-router-miswired-v4/` and `wire-fixture-both-business-v4/` in the
+same assembly directory above. Final source pins are in
+`wire-both-business-families-v4/source-pins.json`; the original source pins and
+earlier evidence remain immutable. Runner SHA-256:
+`37d8c6b79b61a2586116de2a7c9b0050ba3b4745b4a56579460aecb3909db369`.
+The audit checked 1342 owned files up to 32 MiB, excluding symlinks, and found no
+literal current upstream cloud key. This is not a cold-boot credential-recovery
 acceptance. The persistent browser cloud path remains the next integration step.
