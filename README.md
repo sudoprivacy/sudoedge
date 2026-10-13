@@ -182,6 +182,31 @@ configuration contract and acceptance live in sudostack
 `security/egress-gate/`. The box-specific part here is which Router channels a
 box token can reach (`scripts/configure.sh`).
 
+### Content checks and failure handling
+
+The detector supplies findings or an error. Nexus's `EgressContentHook`
+applies the policy in the pre-write hook; a rejected write never reaches the
+model driver's send step. The box currently uses the default `redact` policy.
+
+| Check on a configured outbound write | Default handling |
+|---|---|
+| Native identifier or credential rule matches | Replace the matched value with a redaction marker |
+| Local Presidio or an explicit business policy matches | Redact the supported prose values; preserve model and routing fields |
+| No actionable finding | Allow the write |
+| Analyzer unavailable, timed out, or returns an invalid result | Reject the outbound write |
+| Finding cannot be safely applied to UTF-8 or JSON | Reject the outbound write |
+| Local `/model` or the user's local session transcript | Preserve the original; these paths are not configured as outbound planes |
+
+`deny` is a separate configurable policy that rejects sensitive writes;
+`observe` allows them and does not enforce confidentiality. A compiled gate
+with no outbound mounts configured checks no traffic.
+
+[Detection points, policy, ecosystem integration and acceptance](docs/EGRESS_GATE.md)
+records the full matrix, including scode CLI routing, cross-domain A2A,
+artifact/export gaps and exact implementation sources. Shared detector code,
+policy configuration and evaluation remain in
+[sudostack](https://github.com/sudoprivacy/sudostack/tree/main/security/egress-gate).
+
 ## Credential handling
 The box carries its **own identity** (self-signed CA_B) for cross-org agent
 authorship, and never receives our CA or joins our cluster. The one upstream
