@@ -1,7 +1,7 @@
 # Content egress checks and ecosystem integration
 
 This is the SudoEdge deployment reference for detection points, policy and
-acceptance, checked on 2026-10-13. The first diagram in
+acceptance, checked on 2026-10-18. The first diagram in
 [Sudo Cloud architecture](https://s.shareone.vip/s/sudo-cloud-plan) is the
 deployment direction. Shared component selection and policy configuration are
 owned by [sudostack's DLP composition](https://github.com/sudoprivacy/sudostack/blob/95415b0493de52abb6a7bb8dfc7880aee96ebd7f/security/egress-gate/COMPOSITION.md).
@@ -100,16 +100,17 @@ This is content-hook audit coverage, not a claim about every application's logs.
 | Form | Intended assembly | Required integration and current status |
 |---|---|---|
 | SudoEdge browser | Local WebUI → local Moss → ManagedAgentService in nexusd-cohost → in-process scode → Nexus mount → local new-api | Local route is deployed. The external route has passed isolated real-wire acceptance; install the permanent gated mount and encrypted credential, then accept browser selection and restart recovery |
-| Sudo Cloud | Cloud Moss → nexusd-cluster control plane → user's nexusd-cohost → tenant model mount → SudoRouter | Put the hook and loopback analyzer in the daemon whose kernel receives that tenant's model writes. Configure tenant policy and outbound mounts there; the central broker alone does not inspect a user's pod-local prompt |
+| Sudo Cloud | Cloud Moss → user's nexusd-cohost ManagedAgentService → tenant model mount → SudoRouter; nexusd-cluster supplies control-plane identity and broker services | Put the hook and loopback analyzer in the daemon whose kernel receives that tenant's model writes. Configure tenant policy and outbound mounts there; the central broker alone does not inspect a user's pod-local prompt |
 | Sudo Private | Customer-managed service form using the same shared assembly | The customer chooses which model and A2A mounts cross its approved boundary. An endpoint outside one process is not automatically outside the customer's trust boundary |
-| Standalone scode CLI | Independent CLI process using a model mount on a local gate-bearing Nexus daemon | CLI transport accepts `nexus:///mount` when its filesystem reaches Nexus. Unlike cohost, standalone direct-HTTP configuration is permitted by code; a gate-bearing daemon, filesystem wiring, credential confinement and real CLI acceptance are still required |
+| Standalone scode CLI without Nexus | Independent CLI process with direct model transport | Nexus and DLP are optional for this form; direct traffic is outside this gate's scope |
+| scode CLI connected to nexusd-cluster | Independent CLI process using `nexus:///mount` on a gate-bearing daemon | Reuse the same existing hook service, policy and outbound plane as cohost. Filesystem wiring and actual CLI acceptance remain to be verified |
 
 Cohost requires mounted model transport and refuses a direct provider URL.
 Its profile imports nexusd-cluster's service set and replaces the managed-agent
 spawn provider; it keeps the egress service. The independent CLI need not be
-migrated into cohost to share the gate. Its deployment must actually route
-through the same sending-node kernel, with direct cloud credentials and other
-network routes controlled by the deployment.
+migrated into cohost to share the gate. When Nexus DLP is selected, its outbound
+model traffic must actually pass through that sending-node kernel. Direct
+CLI operation without Nexus is permitted and is not part of this DLP acceptance.
 
 For the edge, local and external new-api groups use separate tokens. Keep the
 local `/model` token local-only, including when the local GPU fails; hold the
@@ -142,6 +143,20 @@ GPUStack/Qwen control. It covers native API-key detection and both agreed
 business policy families: redact emits 8 requests, deny emits only the 2 clean
 requests, analyzer outage emits none. The local control preserves raw input.
 See [the runbook](SETUP.md) for immutable sources, hashes and evidence paths.
+
+On 2026-10-18 the same released cohost binary passed real managed-session
+acceptance: authenticated mTLS controller → ManagedAgentService → in-process
+scode ACP turn → `/cloud-model` → the existing `egress_gate` hook. Clean and
+redacted turns each returned a visible model answer with one upstream request.
+Sensitive-content denial, analyzer connection failure and malformed findings
+each returned a terminal gate error to the controller with zero upstream
+requests. All five cases retained the original input in local session history.
+The model was a deterministic loopback fixture; this test does not establish
+production browser error presentation or permanent cloud mount deployment.
+The reusable runner and exact result belong to
+[sudostack](https://github.com/sudoprivacy/sudostack/tree/main/security/egress-gate/acceptance).
+Device evidence is at
+`~/sudo-dgx/shared-assembly/managed-egress-20261018-v3/evidence/acceptance.json`.
 
 Next accept the product paths separately: permanent edge cloud mount/credential
 and browser errors; standalone CLI through a gate-bearing daemon; managed cloud
