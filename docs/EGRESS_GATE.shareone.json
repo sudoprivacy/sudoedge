@@ -1,0 +1,9 @@
+{
+  "share_id": "WIA4tkEuVdkn9FRn",
+  "share_url": "https://s.shareone.vip/md/egress-gate",
+  "remote_url": "https://raw.githubusercontent.com/sudoprivacy/sudoedge/99ab9e98b5363f084b85288df4d9795bc9747279/docs/EGRESS_GATE.md",
+  "source_path": "docs/EGRESS_GATE.md",
+  "source_commit": "99ab9e98b5363f084b85288df4d9795bc9747279",
+  "content_sha256": "a550f03ed5f31f4f82aecdb11527c75b213da445ba6fe7b63a4ff73b6e019988",
+  "version_mode": "pinned_commit"
+}
