@@ -60,6 +60,12 @@ The current cloud/box target and migration checklist are maintained in
 - `docs/` — the design doc and the operator runbook (`SETUP.md`).
 
 ## How results leave the box
+
+The [detection and handling matrix](docs/EGRESS_GATE.md) records each checked
+plane, detector, policy and failure behavior. Its
+[ShareOne mirror](https://s.shareone.vip/md/egress-gate) follows the reviewed
+Markdown source; policy and reusable acceptance runners remain in sudostack.
+
 The target deployment includes its own **ShareOne** instance, so work produced on site is
 drafted, reviewed and commented **inside** the box — the artifact surface stays
 available with no egress at all, which is what an isolated site needs. What
