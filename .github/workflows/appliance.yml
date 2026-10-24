@@ -32,6 +32,10 @@ jobs:
         run: python tests/cohost-install.py
         env:
           SUDOSTACK_DEPLOY_ROOT: ${{ github.workspace }}/.shared/sudostack
+      - name: Cold-copy checker refuses host execution
+        run: python tests/cohost-checkpoint-boot-test.py
+      - name: Native read-only probe syntax
+        run: node --check scripts/nexus/probe-checkpoint.cjs
       - name: Deployment shell syntax
         run: find scripts tests -name '*.sh' -print0 | xargs -0 -n1 bash -n
       - name: Install network tools
