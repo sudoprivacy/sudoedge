@@ -1,6 +1,6 @@
 {
   "repository": "sudoprivacy/sudostack",
-  "commit": "cc1dc2a8f820aea42f03e6ee47cbf072175c1902",
+  "commit": "086f15f383c3cca36b91eb9f6b777fd47a45bfc9",
   "path": "tools/deploy/cohost.py",
   "sha256": "fce04fced5c3cf66d444466414250f3cd7f5bde2fc60a4eb6905613f13b2c52f",
   "testPath": "tools/deploy/test_cohost.py",
@@ -12,5 +12,9 @@
   "configurationPath": "tools/deploy/configuration.py",
   "configurationSha256": "50c523ea28cf70c97778b9c8a7bebb146f3378474c14b739d4f9c72e12eae1b7",
   "configurationTestPath": "tools/deploy/test_configuration.py",
-  "configurationTestSha256": "43a8d882fc8c25ea8e1892d75a615222627efad64bc81aec4894f2a512dcd095"
+  "configurationTestSha256": "43a8d882fc8c25ea8e1892d75a615222627efad64bc81aec4894f2a512dcd095",
+  "qualificationEndpointPath": "tools/deploy/qualification_endpoint.py",
+  "qualificationEndpointSha256": "f7720389e6ed7ba5e7066c966da985b483c557f2c87addd8fba3ef076f0c0e03",
+  "qualificationEndpointTestPath": "tools/deploy/test_qualification_endpoint.py",
+  "qualificationEndpointTestSha256": "868d4d62210c88aeb54d15b3b48c444d7afc69f988e26ae135a5395cc2f50875"
 }

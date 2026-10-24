@@ -82,5 +82,16 @@ class EdgeConfigurationTests(configuration_shared.ConfigurationTests):
     pass
 
 
+endpoint_test = STACK/LOCK['qualificationEndpointTestPath']
+assert hashlib.sha256(endpoint_test.read_bytes()).hexdigest() == LOCK['qualificationEndpointTestSha256']
+endpoint_spec = importlib.util.spec_from_file_location('shared_endpoint_tests', endpoint_test)
+endpoint_shared = importlib.util.module_from_spec(endpoint_spec)
+endpoint_spec.loader.exec_module(endpoint_shared)
+
+
+class EdgeQualificationEndpointTests(endpoint_shared.EndpointTests):
+    pass
+
+
 if __name__ == '__main__':
     unittest.main()

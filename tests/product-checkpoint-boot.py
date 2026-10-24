@@ -24,6 +24,27 @@ def qualify(profile):
               'newAgentRequested':False, 'children':[]}
     children = []
     try:
+        dependency = profile.get('loopbackDependency')
+        if dependency:
+            lock = json.loads(Path(__file__).resolve().parents[1].joinpath('scripts/sudostack.lock.json').read_text())
+            if boundary.digest(dependency['path']) != lock['qualificationEndpointSha256']:
+                raise ValueError('Shared qualification endpoint differs from the pinned Stack producer')
+            with (evidence/'dependency.stdout.log').open('xb') as out, (evidence/'dependency.stderr.log').open('xb') as err:
+                process = subprocess.Popen([sys.executable,dependency['path'],'namespace','--socket',dependency['socket'],
+                                            '--port',str(dependency['port']),'--host-network-namespace',profile['hostNetworkNamespace']],
+                                           stdin=subprocess.DEVNULL,stdout=out,stderr=err)
+            children.append(('loopback-dependency',process))
+            deadline = time.monotonic()+10
+            while True:
+                if process.poll() is not None:
+                    raise RuntimeError('The isolated real dependency endpoint exited before readiness')
+                records = (evidence/'dependency.stdout.log').read_text().splitlines()
+                if records and json.loads(records[0]).get('ready') is True:
+                    report['loopbackDependency'] = json.loads(records[0])
+                    break
+                if time.monotonic() >= deadline:
+                    raise RuntimeError('The isolated dependency endpoint did not become ready')
+                time.sleep(.05)
         for child in profile['children']:
             if boundary.digest(child['executable']) != child['executableSha256']:
                 raise ValueError('Product executable checksum mismatch: '+child['name'])

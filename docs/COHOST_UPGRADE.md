@@ -68,3 +68,13 @@ directory probe remains strict about zero live Agents; only the explicit
 `--live-agent` mode accepts that one preserved identity. No model turn is
 submitted, and recovered-context correctness with the real model remains a
 separate gate. The enclosing sandbox still owns all child cleanup.
+
+If the existing provider uses a real host loopback model endpoint, an explicit
+`loopbackDependency` supplies the pinned Stack `qualification_endpoint.py`,
+its private host-side Unix socket and that exact port. The fixture starts only
+the namespace-side transport before the product, then closes it after all
+product children. The operator must start and close the corresponding host
+transport. Provider URLs, discovery responses, authentication and model policy
+remain the product's original values; no model catalog is synthesized. This
+grants access only to the selected host loopback service, not the production
+Nexus listeners or a general network route.
