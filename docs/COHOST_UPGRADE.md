@@ -68,6 +68,12 @@ directory probe remains strict about zero live Agents; only the explicit
 `--live-agent` mode accepts that one preserved identity. No model turn is
 submitted, and recovered-context correctness with the real model remains a
 separate gate. The enclosing sandbox still owns all child cleanup.
+Before stopping the product services it uses the same producer program's
+explicit `--terminate-existing` action for that same owned copied session.
+This ends the recovered execution through Moss; it does not delete history or
+resume a second session. Native cleanup failure remains a failed case, and
+the outer service manager must also observe an empty process group. Normal
+exit of only the direct children is insufficient for a clean-close claim.
 
 If the existing provider uses a real host loopback model endpoint, an explicit
 `loopbackDependency` supplies the pinned Stack `qualification_endpoint.py`,

@@ -132,6 +132,23 @@ def qualify(profile):
         report['error'] = str(error)
         raise
     finally:
+        cleanup_failure = None
+        if profile.get('mossProductProbe') and any(item['name'] == 'moss' for item in report['children']):
+            product = profile['mossProductProbe']
+            moss = next(child for child in profile['children'] if child['kind'] == 'moss')
+            try:
+                cleanup = subprocess.run([profile['node'],product['path'],product['config'],str(evidence/'execution-cleanup'),
+                                          '--terminate-existing',product['sessionId']],
+                                         env=json.loads(Path(moss['environmentFile']).read_text()),
+                                         capture_output=True,text=True,timeout=240)
+                (evidence/'execution-cleanup.stdout.log').write_text(cleanup.stdout)
+                (evidence/'execution-cleanup.stderr.log').write_text(cleanup.stderr)
+                if cleanup.returncode:
+                    raise RuntimeError('Native product execution cleanup failed; retain the private evidence')
+                report['executionCleanup'] = json.loads(cleanup.stdout)
+            except (OSError,ValueError,RuntimeError,subprocess.TimeoutExpired) as error:
+                cleanup_failure = str(error)
+                report['executionCleanupError'] = cleanup_failure
         report['cleanup'] = []
         for name,process in reversed(children):
             forced = False
@@ -143,6 +160,8 @@ def qualify(profile):
                     process.kill(); process.wait(timeout=5); forced = True
             report['cleanup'].append({'name':name,'exit':process.returncode,'forced':forced})
         (evidence/'receipt.json').write_text(json.dumps(report,indent=2)+'\n')
+        if cleanup_failure and 'error' not in report:
+            raise RuntimeError(cleanup_failure)
     return report
 
 
