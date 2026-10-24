@@ -28,8 +28,14 @@ and those bind mounts. Run as the original unprivileged device user with no
 capabilities. Public/native protocol sources and installed gRPC dependencies
 are supplied by the pinned device profile, not generated as another runtime.
 
-The read-only Node-mTLS probe compares the actual persisted managed Agent,
+The read-only Node-mTLS probe compares the actual process directory's Agent,
 owner, zone and state bindings against a baseline from the restored old cohost.
+The v0.8.3 directory is an in-memory DashMap: its 24 terminated entries vanished
+on the original-version restart, while the 32 durable Moss sessions remained.
+An initial checker incorrectly expected those 24 records to persist and failed
+before isolation. Preserve that failed baseline and source correction. An empty
+process baseline can qualify boot/control readiness; it cannot prove durable
+Agent identity or native history recovery.
 It starts no Agent or model request. Logs and clone credentials stay private
 on the device. No existing service, deployment or global entry is changed by
 this isolated boot check. A platform denial of isolation must be resolved via

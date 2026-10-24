@@ -24,12 +24,14 @@ client.Call({method:'agent_list',payload:Buffer.from('{}'),auth_token:''},
       const records = JSON.parse(Buffer.from(reply.payload).toString()).result;
       if (!Array.isArray(records)) throw Error('Native Agent directory is not an array');
       const managed = records.filter(record => record.kind === 'MANAGED');
-      if (managed.length !== profile.expectedManagedCount) throw Error('Persisted Agent count changed');
+      if (process.argv[3] !== '--baseline' && managed.length !== profile.expectedManagedCount) {
+        throw Error('Agent process count differs from the restored original runtime baseline');
+      }
       if (managed.some(record => record.state !== 'TERMINATED')) throw Error('Unexpected live managed Agent');
       const canonical = managed.map(record => JSON.stringify([record.name,record.owner_id,record.zone_id,record.state])).sort();
       const identityHash = crypto.createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
       if (process.argv[3] !== '--baseline' && identityHash !== profile.expectedManagedIdentitySha256) {
-        throw Error('Persisted Agent/owner/zone/state bindings changed');
+        throw Error('Agent process bindings differ from the restored original runtime baseline');
       }
       console.log(JSON.stringify({authenticatedNodeControl:true, managedCount:managed.length,
         managedIdentitySha256:identityHash,
