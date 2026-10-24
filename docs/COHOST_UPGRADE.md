@@ -189,3 +189,7 @@ native owner/Agent binding even if its execution has ended. It reports the
 actual state and `executionActive` separately. This is the pre-resume
 observation, never proof of a live receiver. The existing `--live-agent` mode
 continues to refuse a terminated execution and remains the post-resume check.
+Historical terminated execution records may remain for that same owner/Agent.
+The live check requires exactly one active execution and refuses another owner
+or Agent even in historical records; two active executions also refuse. The
+cold-copy no-live/count/hash baseline is separate and remains strict.
