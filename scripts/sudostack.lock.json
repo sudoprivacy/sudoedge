@@ -1,0 +1,8 @@
+{
+  "repository": "sudoprivacy/sudostack",
+  "commit": "a0aa6d83c8777d1ae385aa93fe473a6488ee5943",
+  "path": "tools/deploy/cohost.py",
+  "sha256": "1796e0f6b0e0571e583ed15eccb602680d9ee86b89222a6bdb131f3ca2d9df0a",
+  "testPath": "tools/deploy/test_cohost.py",
+  "testSha256": "36926322df98778f6e26255ae103a4eb9656248d8b02f6dc4b584d89123e42e3"
+}
