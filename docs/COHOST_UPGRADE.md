@@ -101,3 +101,24 @@ Bind its backend cache to a private cold copy too. Omitting this action can
 leave `.prompt` writes without a live model backend even though process and
 REST readiness succeeded. Keep that failure as evidence; do not substitute a
 direct provider request to bypass the native mount or its content policy.
+
+For a controlled existing-product upgrade, `scripts/prepare-product-selection.py
+PRIVATE_PROFILE NEW_PRIVATE_DIRECTORY` inspects the actual user-service
+executables, arguments, main units and every drop-in through the pinned Stack
+boundary. Its versioned profile contains `exclusiveConfigurationOwner: true`,
+the complete `checkpoint` plan and exactly one `versions` entry per service:
+`unit`, source commit `source`, candidate `binary` and `sha256`, optional
+`entry: {before, path, sha256}`, and optional `workingDirectory`. The original
+application entry and native units/drop-ins must already be checkpoint pins.
+
+The preparer preserves unit bytes outside the selected executable, application
+entry and working directory. It refuses ExecStart overrides in drop-ins or
+commands requiring runtime expansion, verifies the new units with native
+`systemd-analyze`, and emits private prepared units plus a shared selection
+plan. Preparation changes no service or existing configuration. Apply that
+exact plan with `scripts/stack-action.py selection apply --plan PLAN --output
+NEW_EVIDENCE` under the same exclusive owner. Stack owns stopping, checkpoint,
+file selection, reload and process verification; Edge then checks native
+readiness and the original-session model journey. Existing model-route and
+content-policy drop-ins remain in place. A failure after selection keeps
+services stopped for native recovery rather than auto-restoring an old DB.

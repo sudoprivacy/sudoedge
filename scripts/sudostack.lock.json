@@ -1,12 +1,12 @@
 {
   "repository": "sudoprivacy/sudostack",
-  "commit": "086f15f383c3cca36b91eb9f6b777fd47a45bfc9",
+  "commit": "9b910f5c9133f363e22b5785cef68f50bc33511a",
   "path": "tools/deploy/cohost.py",
-  "sha256": "fce04fced5c3cf66d444466414250f3cd7f5bde2fc60a4eb6905613f13b2c52f",
+  "sha256": "8198f87075bba1d35526d1e046adfc02900b074b3f9bb98c045889897a6158e7",
   "testPath": "tools/deploy/test_cohost.py",
-  "testSha256": "1973fd82b30330efc7739379dc734ab96d538b379b1be1bd5ecbf3e9542a6944",
+  "testSha256": "0422c7798b7099807cc6354d18e2f4b231ff16350bdbf1d458813b7698f3ddbe",
   "checkpointPath": "tools/deploy/checkpoint.py",
-  "checkpointSha256": "0a50863f88fd22d3c9de4a446d248dfd488fdb48101a23c0978da90bc47bf81f",
+  "checkpointSha256": "57020cb81b6ac84ac1e04d3b6fc07fc37e8249ca66aa3055c201b8162747e8d5",
   "checkpointTestPath": "tools/deploy/test_checkpoint.py",
   "checkpointTestSha256": "cf51dffe99dfab4aaa287242192aaae2a676fb5c2f42b2d9f2bbe0439d42c4ed",
   "configurationPath": "tools/deploy/configuration.py",
@@ -16,5 +16,9 @@
   "qualificationEndpointPath": "tools/deploy/qualification_endpoint.py",
   "qualificationEndpointSha256": "f7720389e6ed7ba5e7066c966da985b483c557f2c87addd8fba3ef076f0c0e03",
   "qualificationEndpointTestPath": "tools/deploy/test_qualification_endpoint.py",
-  "qualificationEndpointTestSha256": "868d4d62210c88aeb54d15b3b48c444d7afc69f988e26ae135a5395cc2f50875"
+  "qualificationEndpointTestSha256": "868d4d62210c88aeb54d15b3b48c444d7afc69f988e26ae135a5395cc2f50875",
+  "selectionPath": "tools/deploy/selection.py",
+  "selectionSha256": "c4a6dd6e587abf2768063a6e2fb707593e5e2b7418a91807a4e9ccf3ee745725",
+  "selectionTestPath": "tools/deploy/test_selection.py",
+  "selectionTestSha256": "d39cc32d16c602095fbdea34bf53ef9d1438b6edd4906dd132cf65b05f01910f"
 }
