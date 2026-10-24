@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "revision": 0,
+  "enabled": true,
+  "mode": "redact",
+  "modelMounts": [
+    "/cloud-model"
+  ],
+  "a2aMounts": [],
+  "analyzer": {
+    "url": "http://127.0.0.1:59080",
+    "language": "zh",
+    "scoreThreshold": 0.5,
+    "entities": [
+      "PERSON",
+      "LOCATION",
+      "ORGANIZATION"
+    ],
+    "timeoutMs": 10000
+  },
+  "businessPolicy": {
+    "version": 1,
+    "public_organizations": [],
+    "protected_terms": [],
+    "protected_markers": []
+  }
+}

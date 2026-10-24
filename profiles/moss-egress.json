@@ -1,0 +1,5 @@
+{
+  "egressGate": {
+    "defaultPolicyFile": "/etc/sudo/egress-policy.json"
+  }
+}

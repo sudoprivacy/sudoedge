@@ -1,0 +1,24 @@
+name: egress-profile
+on:
+  pull_request:
+    paths: ['profiles/**', '.github/workflows/egress-profile.yml']
+  push:
+    branches: [main]
+    paths: ['profiles/**', '.github/workflows/egress-profile.yml']
+permissions:
+  contents: read
+jobs:
+  profile-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: sudoprivacy/sudostack
+          ref: 1eb09213fc5355e3c9918e52fda063077b8062b6
+          path: .shared-policy
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.21.0'
+      - name: Check the deployment through the shared policy validator
+        run: node .shared-policy/packages/egress-policy/bin/check-profile.mjs profiles/egress-policy.json --expect-enabled --model-mount /cloud-model --exclude-model-mount /model
