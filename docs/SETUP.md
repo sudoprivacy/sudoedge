@@ -239,13 +239,29 @@ box's kernel before federation to receive the gate; direct external-broker
 writes bypass it. Artifact exports also need a governed route. Neither path
 is accepted by the model-plane harness.
 
-The cohost installer stages binary replacement atomically and checks the running
-main process hash. It reports failure if an override or an already running old
-process prevents activation. Inspect the effective unit with `systemctl --user cat`
-and restart only after managed sessions are idle; installing does not interrupt
-an existing session automatically.
+The cohost placement implementation now comes from the exact-pinned sudostack
+action in `scripts/sudostack.lock.json`. The appliance wrapper supplies paths,
+unit, bind address and zone only. Set `SUDOSTACK_DEPLOY_ROOT` to that checkout or
+an offline source bundle containing its locked files, and supply the producer's
+authenticated `SUDOEDGE_COHOST_SOURCE` (full commit) and
+`SUDOEDGE_COHOST_SHA256` (executable hash). No floating download is performed.
 
-Script checks: `python3 tests/cohost-install.py`, `sudo bash tests/connectivity.sh`,
+`SUDOEDGE_DEPLOY_COMMAND=inspect` performs a read-only current-process/source
+check; `stage` publishes a hash-named executable without changing a service.
+The default `install` starts only a fresh unit, or reports an identical running
+executable without restart. A different existing unit is refused before changes,
+including an inactive one; its original paths, identity, model and policy
+drop-ins require a reviewed owner-controlled drain/adoption step. Process hash
+verification alone is not authenticated readiness or cross-domain join acceptance.
+
+The real DGX execution target remains the existing Moss/cohost product runtime.
+An additional standalone Agent is not a substitute for deploying that path.
+Shared sequence, authentication/authorization boundaries and current missing
+native contracts are documented in sudostack's
+`docs/design/cohost-deploy-and-domain-join.md`. Cloud consumes the same native
+contracts and shared sequence with its Kubernetes placement adapter.
+
+Script checks: `SUDOSTACK_DEPLOY_ROOT=/pinned/stack python3 tests/cohost-install.py`, `sudo bash tests/connectivity.sh`,
 `python3 tests/model-config.py` and `python3 tests/router-config.py`.
 Keep generated credentials outside git.
 

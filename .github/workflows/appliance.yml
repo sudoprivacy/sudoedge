@@ -16,12 +16,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Resolve shared deploy source pin
+        id: stack
+        run: python -c "import json,os; x=json.load(open('scripts/sudostack.lock.json')); open(os.environ['GITHUB_OUTPUT'],'a').write('commit='+x['commit']+'\n')"
+      - uses: actions/checkout@v4
+        with:
+          repository: sudoprivacy/sudostack
+          ref: ${{ steps.stack.outputs.commit }}
+          path: .shared/sudostack
       - name: Router provisioning and catalog preservation
         run: python tests/router-config.py
       - name: Model limits and client configuration
         run: python tests/model-config.py
       - name: Cohost installation verifies actual process bytes
         run: python tests/cohost-install.py
+        env:
+          SUDOSTACK_DEPLOY_ROOT: ${{ github.workspace }}/.shared/sudostack
       - name: Deployment shell syntax
         run: find scripts tests -name '*.sh' -print0 | xargs -0 -n1 bash -n
       - name: Install network tools
