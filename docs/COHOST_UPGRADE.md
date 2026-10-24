@@ -74,6 +74,13 @@ This ends the recovered execution through Moss; it does not delete history or
 resume a second session. Native cleanup failure remains a failed case, and
 the outer service manager must also observe an empty process group. Normal
 exit of only the direct children is insufficient for a clean-close claim.
+`mossProductProbe.liveModelJourney: true` explicitly opts into the producer's
+three-turn real-model journey on that same copied existing session. It uses
+the shared deployed REST/WebSocket protocol: arithmetic, a dependent reply,
+then reattach and recall. Original provider/model settings remain unchanged.
+Each model turn retains the existing live journey's 180-second deadline and
+each WebSocket hello 30 seconds. This distinct full journey has an explicit
+1080-second parent probe budget; the resume-only budget remains 240 seconds.
 
 If the existing provider uses a real host loopback model endpoint, an explicit
 `loopbackDependency` supplies the pinned Stack `qualification_endpoint.py`,

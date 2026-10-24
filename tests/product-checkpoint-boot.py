@@ -101,10 +101,11 @@ def qualify(profile):
             if boundary.digest(product['path']) != product['sha256']:
                 raise ValueError('Moss producer recovery probe checksum mismatch')
             moss = next(child for child in profile['children'] if child['kind'] == 'moss')
+            exercise = product.get('liveModelJourney') is True
             recovery = subprocess.run([profile['node'],product['path'],product['config'],str(evidence/'product-recovery'),
-                                       '--resume-existing',product['sessionId']],
+                                       '--exercise-existing' if exercise else '--resume-existing',product['sessionId']],
                                       env=json.loads(Path(moss['environmentFile']).read_text()),
-                                      capture_output=True,text=True,timeout=240)
+                                      capture_output=True,text=True,timeout=1080 if exercise else 240)
             (evidence/'recovery.stdout.log').write_text(recovery.stdout)
             (evidence/'recovery.stderr.log').write_text(recovery.stderr)
             if recovery.returncode:
