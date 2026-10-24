@@ -71,5 +71,16 @@ class EdgeCheckpointTests(checkpoint_shared.CheckpointTests):
     pass
 
 
+configuration_test = STACK/LOCK['configurationTestPath']
+assert hashlib.sha256(configuration_test.read_bytes()).hexdigest() == LOCK['configurationTestSha256']
+configuration_spec = importlib.util.spec_from_file_location('shared_configuration_tests', configuration_test)
+configuration_shared = importlib.util.module_from_spec(configuration_spec)
+configuration_spec.loader.exec_module(configuration_shared)
+
+
+class EdgeConfigurationTests(configuration_shared.ConfigurationTests):
+    pass
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -19,10 +19,14 @@ def main():
     if arguments and arguments[0] == 'checkpoint':
         selected = 'checkpointPath'
         arguments = arguments[1:]
+    elif arguments and arguments[0] == 'configuration':
+        selected = 'configurationPath'
+        arguments = arguments[1:]
     # Check the shared dependency too: checkpoint imports existing placement
     # helpers rather than carrying another private-publishing implementation.
     actions = {}
-    for path_key, hash_key in [('path', 'sha256'), ('checkpointPath', 'checkpointSha256')]:
+    for path_key, hash_key in [('path', 'sha256'), ('checkpointPath', 'checkpointSha256'),
+                               ('configurationPath', 'configurationSha256')]:
         relative = Path(lock[path_key])
         if relative.is_absolute() or '..' in relative.parts:
             raise ValueError('Invalid shared action lock path')

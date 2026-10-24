@@ -1,6 +1,6 @@
 {
   "repository": "sudoprivacy/sudostack",
-  "commit": "e4621ef494bb65c3b39f57c1ec520a65e3d1d557",
+  "commit": "cc1dc2a8f820aea42f03e6ee47cbf072175c1902",
   "path": "tools/deploy/cohost.py",
   "sha256": "fce04fced5c3cf66d444466414250f3cd7f5bde2fc60a4eb6905613f13b2c52f",
   "testPath": "tools/deploy/test_cohost.py",
@@ -8,5 +8,9 @@
   "checkpointPath": "tools/deploy/checkpoint.py",
   "checkpointSha256": "0a50863f88fd22d3c9de4a446d248dfd488fdb48101a23c0978da90bc47bf81f",
   "checkpointTestPath": "tools/deploy/test_checkpoint.py",
-  "checkpointTestSha256": "cf51dffe99dfab4aaa287242192aaae2a676fb5c2f42b2d9f2bbe0439d42c4ed"
+  "checkpointTestSha256": "cf51dffe99dfab4aaa287242192aaae2a676fb5c2f42b2d9f2bbe0439d42c4ed",
+  "configurationPath": "tools/deploy/configuration.py",
+  "configurationSha256": "50c523ea28cf70c97778b9c8a7bebb146f3378474c14b739d4f9c72e12eae1b7",
+  "configurationTestPath": "tools/deploy/test_configuration.py",
+  "configurationTestSha256": "43a8d882fc8c25ea8e1892d75a615222627efad64bc81aec4894f2a512dcd095"
 }
