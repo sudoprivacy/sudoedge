@@ -46,3 +46,14 @@ Passing this check still leaves native history/owner recovery, real Moss
 session resume, local model/content-gate behavior, controlled activation and
 cross-domain join/AuthN/AuthZ to qualify. Preserve pre/post-admission Unknown
 semantics and actual reader guarantees in subsequent A2A tests.
+
+For the complete product check, `tests/product-checkpoint-boot.py` reuses the
+same OS boundary verifier. A private device profile binds cold copies of both
+Nexus stores/identities, controller credentials and Moss home at their original
+paths. It starts the pinned primary Nexus, execution cohost and producer Moss
+entry in order, with each original environment kept in a private file. Both
+Nexus instances must pass the native mTLS probe; Moss must become HTTP-ready
+under the preserved configured instance ID. Existing session/attempt/event
+counts must remain. Children stop in reverse order with bounded cleanup and
+any forced cleanup is retained. The process test starts no Agent and does not
+claim native history resume, a model call or a domain join from HTTP readiness.

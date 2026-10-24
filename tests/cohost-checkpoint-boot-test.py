@@ -16,11 +16,12 @@ class BoundaryTest(unittest.TestCase):
             profile = root/'profile.json'
             profile.write_text(json.dumps({'hostNetworkNamespace':os.readlink('/proc/self/ns/net'),
                                           'candidate':{'path':'must-never-execute'}, 'evidence':str(root/'evidence')}))
-            result = subprocess.run([sys.executable, str(Path(__file__).with_name('cohost-checkpoint-boot.py')), str(profile)],
-                                    capture_output=True,text=True,timeout=10)
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn('separate network namespace is required', result.stderr)
-            self.assertFalse((root/'evidence').exists())
+            for worker in ['cohost-checkpoint-boot.py','product-checkpoint-boot.py']:
+                result = subprocess.run([sys.executable, str(Path(__file__).with_name(worker)), str(profile)],
+                                        capture_output=True,text=True,timeout=10)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('separate network namespace is required', result.stderr)
+                self.assertFalse((root/'evidence').exists())
 
 
 if __name__ == '__main__':
