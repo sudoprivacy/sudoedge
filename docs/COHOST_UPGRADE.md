@@ -57,3 +57,14 @@ under the preserved configured instance ID. Existing session/attempt/event
 counts must remain. Children stop in reverse order with bounded cleanup and
 any forced cleanup is retained. The process test starts no Agent and does not
 claim native history resume, a model call or a domain join from HTTP readiness.
+
+An explicit `mossProductProbe` additionally selects the producer's pinned
+existing-session recovery program and the recorded original session ID. The
+startup count assertions run first, unchanged. Only then may the same-owner
+session be resumed through Moss, its native binding verified, and its live
+Nexus owner/Agent identity observed. There must still be the original logical
+session count and exactly one new execution attempt. The ordinary native
+directory probe remains strict about zero live Agents; only the explicit
+`--live-agent` mode accepts that one preserved identity. No model turn is
+submitted, and recovered-context correctness with the real model remains a
+separate gate. The enclosing sandbox still owns all child cleanup.

@@ -24,17 +24,25 @@ client.Call({method:'agent_list',payload:Buffer.from('{}'),auth_token:''},
       const records = JSON.parse(Buffer.from(reply.payload).toString()).result;
       if (!Array.isArray(records)) throw Error('Native Agent directory is not an array');
       const managed = records.filter(record => record.kind === 'MANAGED');
-      if (process.argv[3] !== '--baseline' && managed.length !== profile.expectedManagedCount) {
+      const live = process.argv[3] === '--live-agent';
+      if (live) {
+        if (managed.length !== 1 || managed[0].state === 'TERMINATED' ||
+            managed[0].name !== profile.expectedLiveAgentId || managed[0].owner_id !== profile.expectedLiveOwnerId) {
+          throw Error('Existing live Agent execution does not match the preserved owner/Agent binding');
+        }
+      } else if (process.argv[3] !== '--baseline' && managed.length !== profile.expectedManagedCount) {
         throw Error('Agent process count differs from the restored original runtime baseline');
       }
-      if (managed.some(record => record.state !== 'TERMINATED')) throw Error('Unexpected live managed Agent');
+      if (!live && managed.some(record => record.state !== 'TERMINATED')) throw Error('Unexpected live managed Agent');
       const canonical = managed.map(record => JSON.stringify([record.name,record.owner_id,record.zone_id,record.state])).sort();
       const identityHash = crypto.createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
-      if (process.argv[3] !== '--baseline' && identityHash !== profile.expectedManagedIdentitySha256) {
+      if (!live && process.argv[3] !== '--baseline' && identityHash !== profile.expectedManagedIdentitySha256) {
         throw Error('Agent process bindings differ from the restored original runtime baseline');
       }
       console.log(JSON.stringify({authenticatedNodeControl:true, managedCount:managed.length,
         managedIdentitySha256:identityHash,
+        ...(live ? { existingExecution:{ agentId:managed[0].name,ownerId:managed[0].owner_id,
+          state:managed[0].state,zone:managed[0].zone_id } } : {}),
         newAgentCreated:false, inferenceRequested:false}));
     } catch (failure) {
       console.error(failure.message);

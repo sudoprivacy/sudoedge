@@ -75,6 +75,35 @@ def qualify(profile):
             report['mossRows'] = counts
         finally:
             db.close()
+        if profile.get('mossProductProbe'):
+            product = profile['mossProductProbe']
+            if boundary.digest(product['path']) != product['sha256']:
+                raise ValueError('Moss producer recovery probe checksum mismatch')
+            moss = next(child for child in profile['children'] if child['kind'] == 'moss')
+            recovery = subprocess.run([profile['node'],product['path'],product['config'],str(evidence/'product-recovery'),
+                                       '--resume-existing',product['sessionId']],
+                                      env=json.loads(Path(moss['environmentFile']).read_text()),
+                                      capture_output=True,text=True,timeout=240)
+            (evidence/'recovery.stdout.log').write_text(recovery.stdout)
+            (evidence/'recovery.stderr.log').write_text(recovery.stderr)
+            if recovery.returncode:
+                raise RuntimeError('Existing product recovery failed; see private probe evidence')
+            report['existingProductRecovery'] = json.loads(recovery.stdout)
+            execution = next(child for child in profile['children'] if child['name'] == 'execution')
+            live = subprocess.run([profile['node'],profile['probe']['path'],execution['probeProfile'],'--live-agent'],
+                                  capture_output=True,text=True,timeout=12)
+            if live.returncode:
+                raise RuntimeError('Existing Agent live identity probe failed: '+live.stderr[-1200:])
+            report['existingExecutionObserved'] = json.loads(live.stdout)
+            db = sqlite3.connect('file:'+profile['database']+'?mode=ro',uri=True)
+            try:
+                counts = {table:db.execute('SELECT count(*) FROM '+table).fetchone()[0]
+                          for table in ('sessions','session_attempts','session_events')}
+                if counts['sessions'] != profile['expectedRows']['sessions'] or counts['session_attempts'] != profile['expectedRows']['session_attempts']+1:
+                    raise RuntimeError('Recovery must reuse the logical session and create one execution attempt')
+                report['mossRowsAfterRecovery'] = counts
+            finally:
+                db.close()
         report['productStartupAccepted'] = True
     except BaseException as error:
         report['error'] = str(error)
