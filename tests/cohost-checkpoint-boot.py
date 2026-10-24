@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import time
 
@@ -23,6 +24,18 @@ def verify_boundary(profile):
         raise ValueError('Run the checker as the original unprivileged device user')
     if os.readlink('/proc/self/ns/net') == profile['hostNetworkNamespace']:
         raise ValueError('A separate network namespace is required; host execution refused')
+    if os.readlink('/proc/self/ns/mnt') == profile['hostMountNamespace']:
+        raise ValueError('A separate mount namespace is required')
+    mounts = []
+    for line in Path('/proc/self/mountinfo').read_text().splitlines():
+        fields = line.split()
+        mount = re.sub(r'\\([0-7]{3})', lambda value:chr(int(value[1],8)), fields[4])
+        mounts.append((mount, fields[5].split(',')))
+    for path in profile['readOnlyPaths']:
+        matching = [(mount,options) for mount,options in mounts
+                    if path == mount or path.startswith(mount.rstrip('/')+'/')]
+        if not matching or 'ro' not in max(matching, key=lambda item:len(item[0]))[1]:
+            raise ValueError('Host path is not mounted read-only: '+path)
     for binding in profile['bindings']:
         original, copy = Path(binding['original']), Path(binding['copy'])
         if original.resolve() == copy.resolve():
