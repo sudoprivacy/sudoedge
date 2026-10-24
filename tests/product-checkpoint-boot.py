@@ -79,6 +79,17 @@ def qualify(profile):
                         raise RuntimeError('Product component readiness exceeded 45 seconds: '+child['name']) from error
                     time.sleep(.25)
             report['children'].append({'name':child['name'],'attempts':attempts,'startupFailures':failures,'readiness':ready})
+            if child.get('postStart'):
+                post = child['postStart']
+                if child['kind'] != 'nexus' or boundary.digest(post['path']) != post['sha256']:
+                    raise ValueError('Product post-start recovery entry pin does not match')
+                recovered = subprocess.run([profile['node'],post['path']],env=environment,
+                                           capture_output=True,text=True,timeout=180)
+                (evidence/(child['name']+'.post-start.stdout.log')).write_text(recovered.stdout)
+                (evidence/(child['name']+'.post-start.stderr.log')).write_text(recovered.stderr)
+                if recovered.returncode:
+                    raise RuntimeError('Product post-start recovery failed: '+child['name'])
+                report['children'][-1]['postStartRecoveryAccepted'] = True
         report['afterMossNativeReadiness'] = []
         for child in profile['children']:
             if child['kind'] == 'nexus':

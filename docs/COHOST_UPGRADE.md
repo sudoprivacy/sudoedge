@@ -91,3 +91,13 @@ transport. Provider URLs, discovery responses, authentication and model policy
 remain the product's original values; no model catalog is synthesized. This
 grants access only to the selected host loopback service, not the production
 Nexus listeners or a general network route.
+
+A raw executable launch does not replay a systemd unit's recovery transaction.
+If the real product has `ExecStartPost` model-route recovery, its private
+qualification profile must supply that exact pinned Node entry as `postStart`.
+It runs with the original service environment after authenticated startup and
+before Moss starts, retaining the installed recovery action's 180-second bound.
+Bind its backend cache to a private cold copy too. Omitting this action can
+leave `.prompt` writes without a live model backend even though process and
+REST readiness succeeded. Keep that failure as evidence; do not substitute a
+direct provider request to bypass the native mount or its content policy.
