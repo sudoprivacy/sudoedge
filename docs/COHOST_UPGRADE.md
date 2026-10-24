@@ -5,6 +5,47 @@ existing units/drop-ins, data, identities, model routes and the Moss database.
 The installed Moss/cohost pair is an actual product runtime, not a disposable
 Agent fixture. A source or placement receipt does not prove an upgrade.
 
+The controlled DGX upgrade has now run through the pinned shared selection
+action on the existing three-service product. Both Nexus services and official
+Moss 0.1.78 passed authenticated readiness. The stable controller instance,
+32-session startup inventory, original Agent/owner/durable SID/repository and
+the old 18-message projection were preserved. Three real local-Qwen turns,
+including a dependent reply and reattach/recall, passed with original model and
+content-policy configuration unchanged. The actual Moss product retains its
+execution. Cross-domain join and seven-party delivery have not been qualified.
+
+For another device, use the same source-owned steps with a private device
+profile, rather than copying this device's credentials or identity:
+
+1. Inspect actual service executables, entries, environments and every drop-in;
+   pin their hashes and all durable/native configuration roots. Obtain the
+   product's actual controller instance and existing session binding through
+   the Moss producer checkers. Prepare only a missing stable instance setting;
+   do not replace it with a random ID.
+2. Stage immutable architecture/source/digest-verified cohost and Moss artifacts.
+   Qualify their real migrations and original-session recovery on cold copies
+   with the product's complete model cache, loopback dependency and installed
+   post-start recovery action. The sandbox owns all copied executions/cleanup.
+3. Run `prepare-product-selection.py` as described below. Review its native
+   systemd validation and exact shared selection plan; preparation activates
+   nothing.
+4. Apply that plan through the exact-pinned `stack-action.py selection apply`.
+   Preserve the private cold checkpoint, configuration backups and receipt.
+   The shared action owns the maintenance transaction and actual process pins.
+5. Run native Node-mTLS readiness and the producer's same-owner existing-session
+   checks against the actual product. An explicit model-journey acceptance uses
+   that original session and its existing REST/WebSocket/model route. It adds
+   real messages to that session; ordinary readiness must not silently submit
+   model turns. Keep private payload logs on the device and export bounded
+   hashes, counts and native identity bindings in the deployment receipt.
+6. Record domain join as pending until the native identity, scoped authority,
+   local content-gated forwarding and actual receive/commit checks pass. CA
+   registration or a visible directory does not complete that step.
+
+The following earlier failures and their corrections are retained as recovery
+evidence; the old restart/storage-only checks are not substitutes for the later
+real deployment and model journey.
+
 The 2026-10-24 DGX maintenance preserved 32 sessions, 77 attempts and 547 events.
 The original execution cohost restarted on its original bytes. Moss initially
 refused startup twice because its previous heartbeat was still live while
