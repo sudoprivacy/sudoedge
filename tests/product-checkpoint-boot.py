@@ -58,6 +58,14 @@ def qualify(profile):
                         raise RuntimeError('Product component readiness exceeded 45 seconds: '+child['name']) from error
                     time.sleep(.25)
             report['children'].append({'name':child['name'],'attempts':attempts,'startupFailures':failures,'readiness':ready})
+        report['afterMossNativeReadiness'] = []
+        for child in profile['children']:
+            if child['kind'] == 'nexus':
+                probe = subprocess.run([profile['node'],profile['probe']['path'],child['probeProfile']],
+                                       capture_output=True,text=True,timeout=12)
+                if probe.returncode:
+                    raise RuntimeError('Native process baseline changed after Moss startup: '+probe.stderr[-1200:])
+                report['afterMossNativeReadiness'].append({'name':child['name'],'readiness':json.loads(probe.stdout)})
         db = sqlite3.connect('file:'+profile['database']+'?mode=ro',uri=True)
         try:
             counts = {table:db.execute('SELECT count(*) FROM '+table).fetchone()[0]
