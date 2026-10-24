@@ -28,7 +28,9 @@ client.Call({method:'agent_list',payload:Buffer.from('{}'),auth_token:''},
       if (live) {
         if (managed.length !== 1 || managed[0].state === 'TERMINATED' ||
             managed[0].name !== profile.expectedLiveAgentId || managed[0].owner_id !== profile.expectedLiveOwnerId) {
-          throw Error('Existing live Agent execution does not match the preserved owner/Agent binding');
+          const observed = records.map(record => ({pid:record.pid,agentId:record.name,ownerId:record.owner_id,
+            kind:record.kind,state:record.state,zone:record.zone_id}));
+          throw Error('Existing live Agent execution does not match the preserved owner/Agent binding: '+JSON.stringify(observed));
         }
       } else if (process.argv[3] !== '--baseline' && managed.length !== profile.expectedManagedCount) {
         throw Error('Agent process count differs from the restored original runtime baseline');

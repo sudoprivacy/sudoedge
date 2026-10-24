@@ -113,6 +113,8 @@ def qualify(profile):
             execution = next(child for child in profile['children'] if child['name'] == 'execution')
             live = subprocess.run([profile['node'],profile['probe']['path'],execution['probeProfile'],'--live-agent'],
                                   capture_output=True,text=True,timeout=12)
+            (evidence/'live-execution.stdout.log').write_text(live.stdout)
+            (evidence/'live-execution.stderr.log').write_text(live.stderr)
             if live.returncode:
                 raise RuntimeError('Existing Agent live identity probe failed: '+live.stderr[-1200:])
             report['existingExecutionObserved'] = json.loads(live.stdout)
