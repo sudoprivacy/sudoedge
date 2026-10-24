@@ -61,6 +61,10 @@ The current cloud/box target and migration checklist are maintained in
 
 ## How results leave the box
 
+The [live-policy deployment profile](profiles/README.md) protects
+`/cloud-model` while keeping local GPU `/model` outside the outbound scope.
+Its controller and runtime integration are shared with Cloud and Private.
+
 The [detection and handling matrix](docs/EGRESS_GATE.md) records each checked
 plane, detector, policy and failure behavior. Its
 [ShareOne mirror](https://s.shareone.vip/md/egress-gate) follows the reviewed
