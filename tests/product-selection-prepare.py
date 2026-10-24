@@ -49,11 +49,11 @@ class ProductPreparationTests(unittest.TestCase):
         for index,unit in enumerate(plan['units']):
             child = self.fixture.children[unit['name']]
             child.terminate(); child.wait(timeout=5)
-            self.fixture.children[unit['name']] = subprocess.Popen([sys.executable,str(self.old_app)],cwd=self.home,
+            self.fixture.children[unit['name']] = subprocess.Popen([sys.executable,self.old_app.name],cwd=self.home,
                 stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             path = self.units/unit['name']
             path.write_text('[Unit]\nDescription=Preserve this native unit\n[Service]\nType=simple\nWorkingDirectory='+unit_path(str(self.home))+
-                            '\nEnvironment=UNCHANGED=value\nExecStart='+quoted(sys.executable)+' '+quoted(str(self.old_app))+'\n[Install]\nWantedBy=default.target\n')
+                            '\nEnvironment=UNCHANGED=value\nExecStart='+quoted(sys.executable)+' '+quoted(self.old_app.name)+'\n[Install]\nWantedBy=default.target\n')
             plan['pins'].append({'path':str(path),'sha256':digest(path)})
             version = {'unit':unit['name'],'binary':str(self.binary),'sha256':digest(self.binary),'source':'a'*40}
             if index == 0:

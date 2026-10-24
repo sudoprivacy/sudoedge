@@ -83,8 +83,13 @@ def prepare(profile, destination):
         files = []
         if version.get('entry'):
             entry = version['entry']
-            if set(entry) != {'before','path','sha256'} or len(arguments)<2 or arguments[1] != entry['before']:
+            if set(entry) != {'before','path','sha256'} or len(arguments)<2:
                 raise ValueError('Product application entry does not match the existing process')
+            launched_entry = Path(arguments[1])
+            if not launched_entry.is_absolute():
+                launched_entry = (Path('/proc')/str(pid)/'cwd').resolve()/launched_entry
+            if checkpoint.owned_path(str(launched_entry)) != checkpoint.owned_path(entry['before']):
+                raise ValueError('Product application entry does not match the existing process working directory')
             if pins.get(entry['before']) != digest(checkpoint.owned_path(entry['before'])):
                 raise ValueError('Original application entry must be checkpointed and pinned')
             after = checkpoint.owned_path(entry['path'])
