@@ -183,3 +183,9 @@ The original Moss execution remains owned by the product, with no service stop
 or global-entry change as cleanup. This is authenticated product qualification;
 the receipt still reports `domainJoinAccepted:false` until native joining and
 actual cross-domain delivery have independently passed.
+
+`scripts/nexus/probe-checkpoint.cjs PROFILE --existing-agent` records the same
+native owner/Agent binding even if its execution has ended. It reports the
+actual state and `executionActive` separately. This is the pre-resume
+observation, never proof of a live receiver. The existing `--live-agent` mode
+continues to refuse a terminated execution and remains the post-resume check.
