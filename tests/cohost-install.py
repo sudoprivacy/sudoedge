@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +19,20 @@ spec.loader.exec_module(shared)
 
 
 class EdgeCohostTests(shared.CohostTests):
+    def test_checkpoint_entry_and_both_locked_dependencies(self):
+        command = [sys.executable, str(ROOT/'scripts/stack-action.py'), 'checkpoint', '--help']
+        actual = subprocess.run(command, env={**self.environment,'SUDOSTACK_DEPLOY_ROOT':str(STACK)}, capture_output=True,text=True,timeout=15)
+        self.assertEqual(actual.returncode, 0, actual.stderr)
+        self.assertIn('Cold checkpoint', actual.stdout)
+        fake = self.root/'changed-stack/tools/deploy'
+        fake.mkdir(parents=True)
+        (fake/'cohost.py').write_bytes((STACK/LOCK['path']).read_bytes())
+        (fake/'checkpoint.py').write_text('raise RuntimeError("must not execute")')
+        changed = subprocess.run(command, env={**self.environment,'SUDOSTACK_DEPLOY_ROOT':str(fake.parents[1])},capture_output=True,text=True,timeout=15)
+        self.assertNotEqual(changed.returncode, 0)
+        self.assertIn('does not match the pinned source',changed.stderr)
+        self.assertNotIn('must not execute',changed.stderr)
+
     def test_tampered_shared_action_is_rejected_before_execution(self):
         fake = self.root/'changed-stack/tools/deploy'
         fake.mkdir(parents=True)
@@ -42,6 +57,18 @@ class EdgeCohostTests(shared.CohostTests):
                        **{'SUDOEDGE_COHOST_'+target:values[key] for key,target in names.items()}}
         return subprocess.run(['bash',str(ROOT/'scripts/install-cohost.sh'),values['binary'],values['unit']],
                               env=environment,capture_output=True,text=True,timeout=15)
+
+
+checkpoint_test = STACK/LOCK['checkpointTestPath']
+assert hashlib.sha256(checkpoint_test.read_bytes()).hexdigest() == LOCK['checkpointTestSha256']
+sys.path.insert(0, str(checkpoint_test.parent))
+checkpoint_spec = importlib.util.spec_from_file_location('shared_checkpoint_tests', checkpoint_test)
+checkpoint_shared = importlib.util.module_from_spec(checkpoint_spec)
+checkpoint_spec.loader.exec_module(checkpoint_shared)
+
+
+class EdgeCheckpointTests(checkpoint_shared.CheckpointTests):
+    pass
 
 
 if __name__ == '__main__':

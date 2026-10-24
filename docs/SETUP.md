@@ -5,6 +5,33 @@
 > ([sudo-cloud-plan](https://s.shareone.vip/s/sudo-cloud-plan)). This runbook holds only
 > box-specific configuration; it references the design doc rather than repeating it.
 
+## Existing-runtime maintenance
+
+The appliance consumes the source-pinned sudostack deploy actions through
+`scripts/stack-action.py`; it does not carry a second checkpoint or installer.
+For a controller/cohost upgrade, prepare an owner-only device plan containing
+the actual units in controller-first stop order, executable hashes, durable
+paths and configuration pins. Then run:
+
+```sh
+SUDOSTACK_DEPLOY_ROOT=/verified/stack python3 scripts/stack-action.py \
+  checkpoint inspect --plan /private/device-checkpoint.json --output /private/new-checkpoint
+```
+
+Replace `inspect` with `checkpoint` only at the product's maintenance point.
+The common action stops the selected services, copies the cold state, and
+restores their original executables in reverse order. Include Moss's durable
+home, cohost data/identity/config, controller identity, selected unit files and
+drop-ins, plus the Moss application entry pin. Keep model weights and the
+independent vault/login service out of the stop set. Inspect actual native
+Agent/attempt activity before maintenance; addressability and old reader
+registers do not prove idle. Verify authenticated product readiness afterward.
+
+Use producer offline checks on the private checkpoint before an upgrade.
+Do not run a duplicate live Node identity, replace model/content-gate settings,
+or restore the old database over newer accepted writes. Checkpoint success is
+not a new-runtime, session-recovery, domain-join or seven-party acceptance.
+
 ## The box
 NVIDIA **DGX Spark (GB10 Blackwell)**, aarch64, Ubuntu 24.04, kernel 6.17, GPU
 driver 580, **CUDA 13.0** (`/usr/local/cuda-13.0`). Borrowed machine, in China.
