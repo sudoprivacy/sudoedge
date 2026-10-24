@@ -163,3 +163,23 @@ file selection, reload and process verification; Edge then checks native
 readiness and the original-session model journey. Existing model-route and
 content-policy drop-ins remain in place. A failure after selection keeps
 services stopped for native recovery rather than auto-restoring an old DB.
+
+After selection, the same thin entry invokes shared existing-product
+qualification: `scripts/stack-action.py product inspect --plan PRIVATE_PLAN
+--output NEW_PRIVATE_EVIDENCE`, followed by the explicit `product apply` at
+the product's natural quiet point. The new pinned Moss producer's
+`--inspect-existing` mode first authenticates and reads exactly the original
+session without resuming it. Stack compares that original owner/history,
+then calls the producer's three-turn model and reattach journey and checks the
+recorded native Agent/SID/repository binding. It checks the actual Moss process
+and unchanged private configuration before and after. The producer and Node
+runtime are source/digest pinned; no package installation runs on the DGX.
+
+Keep the native producer/configuration paths, original session metadata and
+current history hash in the private versioned qualification plan documented in
+Stack's `docs/deployment/agent-host.md`. Evidence must be new. Submission is
+recorded before model execution; an uncertain model result is never retried.
+The original Moss execution remains owned by the product, with no service stop
+or global-entry change as cleanup. This is authenticated product qualification;
+the receipt still reports `domainJoinAccepted:false` until native joining and
+actual cross-domain delivery have independently passed.

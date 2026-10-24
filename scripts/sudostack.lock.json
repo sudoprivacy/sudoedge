@@ -1,6 +1,6 @@
 {
   "repository": "sudoprivacy/sudostack",
-  "commit": "9b910f5c9133f363e22b5785cef68f50bc33511a",
+  "commit": "729c6479c5d99c026a6f142f8f6bea495e29fdeb",
   "path": "tools/deploy/cohost.py",
   "sha256": "8198f87075bba1d35526d1e046adfc02900b074b3f9bb98c045889897a6158e7",
   "testPath": "tools/deploy/test_cohost.py",
@@ -20,5 +20,9 @@
   "selectionPath": "tools/deploy/selection.py",
   "selectionSha256": "c4a6dd6e587abf2768063a6e2fb707593e5e2b7418a91807a4e9ccf3ee745725",
   "selectionTestPath": "tools/deploy/test_selection.py",
-  "selectionTestSha256": "d39cc32d16c602095fbdea34bf53ef9d1438b6edd4906dd132cf65b05f01910f"
+  "selectionTestSha256": "d39cc32d16c602095fbdea34bf53ef9d1438b6edd4906dd132cf65b05f01910f",
+  "productQualificationPath": "tools/deploy/product_qualification.py",
+  "productQualificationSha256": "5774f11053bee58d24f144efaa3dec659ac71f4e9b99f4a3043bebaf70db26cf",
+  "productQualificationTestPath": "tools/deploy/test_product_qualification.py",
+  "productQualificationTestSha256": "d8c06b49f6b14fdcf9a1b1a9e0e4e4119a52284673fab2946cdaf4838749d29b"
 }

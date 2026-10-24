@@ -18,7 +18,8 @@ def verified_shared():
     # helpers rather than carrying another private-publishing implementation.
     actions = {}
     for path_key, hash_key in [('path', 'sha256'), ('checkpointPath', 'checkpointSha256'),
-                               ('configurationPath', 'configurationSha256'),('selectionPath','selectionSha256')]:
+                               ('configurationPath', 'configurationSha256'),('selectionPath','selectionSha256'),
+                               ('productQualificationPath','productQualificationSha256')]:
         relative = Path(lock[path_key])
         if relative.is_absolute() or '..' in relative.parts:
             raise ValueError('Invalid shared action lock path')
@@ -34,7 +35,8 @@ def verified_shared():
 def main():
     arguments = sys.argv[1:]
     selected = 'path'
-    choices = {'checkpoint':'checkpointPath','configuration':'configurationPath','selection':'selectionPath'}
+    choices = {'checkpoint':'checkpointPath','configuration':'configurationPath','selection':'selectionPath',
+               'product':'productQualificationPath'}
     if arguments and arguments[0] in choices:
         selected = choices[arguments[0]]
         arguments = arguments[1:]
