@@ -93,5 +93,32 @@ class EdgeQualificationEndpointTests(endpoint_shared.EndpointTests):
     pass
 
 
+product_test = STACK/LOCK['productQualificationTestPath']
+assert hashlib.sha256(product_test.read_bytes()).hexdigest() == LOCK['productQualificationTestSha256']
+product_spec = importlib.util.spec_from_file_location('shared_product_tests',product_test)
+product_shared = importlib.util.module_from_spec(product_spec)
+product_spec.loader.exec_module(product_shared)
+
+
+class EdgeProductQualificationTests(product_shared.ProductQualificationTests):
+    def test_locked_product_entry_and_tampered_native_boundary(self):
+        command = [sys.executable,str(ROOT/'scripts/stack-action.py'),'product','--help']
+        environment = {**os.environ,'SUDOSTACK_DEPLOY_ROOT':str(STACK)}
+        result = subprocess.run(command,env=environment,capture_output=True,text=True,timeout=15)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIn('Run the pinned product producer',result.stdout)
+        fake = self.home/'changed-shared'
+        for key in ['path','checkpointPath','configurationPath','selectionPath','productQualificationPath']:
+            relative = Path(LOCK[key]);target = fake/relative
+            target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes((STACK/relative).read_bytes())
+        (fake/LOCK['productQualificationPath']).write_text('raise RuntimeError("must not execute")')
+        result = subprocess.run(command,env={**environment,'SUDOSTACK_DEPLOY_ROOT':str(fake)},
+            capture_output=True,text=True,timeout=15)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('does not match the pinned source',result.stderr)
+        self.assertNotIn('must not execute',result.stderr)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -40,6 +40,8 @@ jobs:
           SUDOSTACK_DEPLOY_ROOT: ${{ github.workspace }}/.shared/sudostack
       - name: Native read-only probe syntax
         run: node --check scripts/nexus/probe-checkpoint.cjs
+      - name: Native execution history and one-active-owner observation
+        run: node --test tests/probe-checkpoint.test.cjs
       - name: Deployment shell syntax
         run: find scripts tests -name '*.sh' -print0 | xargs -0 -n1 bash -n
       - name: Install network tools
