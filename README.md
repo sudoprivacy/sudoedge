@@ -7,6 +7,16 @@ domain. Current deployment and acceptance evidence lives in `docs/SETUP.md`.
 The local browser and inference path uses the cohost runtime by default;
 cross-domain agent collaboration and content inspection remain tracked work.
 
+Product naming follows the [current product introduction](https://s.shareone.vip/md/sudo-chan-pin-yu-jie-jue-fang-an-jie-shao)
+and [Sudo Enterprise planning](https://s.shareone.vip/s/sudo-enterprise-chan-pin-gui-hua).
+`sudoedge` remains the Box deployment adapter; Moss supplies enterprise Agent
+management. An intranet SudoWork/CLI client reaches the existing Box runtime
+under its own identity and delegated permissions. Generic runtime lifecycle is
+provided by sudocode's shared service owner, and product deployment sequencing
+by [sudostack](https://github.com/sudoprivacy/sudostack/blob/main/docs/design/cohost-deploy-and-domain-join.md).
+The development/office collaboration profile and core-business domain retain
+their separately configured publication and data policies.
+
 ## The scenario
 
 ```mermaid
