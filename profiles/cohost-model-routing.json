@@ -1,0 +1,5 @@
+{
+  "runtimeDefaults": {
+    "cohostModelRouting": "provider-qualified"
+  }
+}
