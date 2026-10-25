@@ -5,6 +5,20 @@ existing units/drop-ins, data, identities, model routes and the Moss database.
 The installed Moss/cohost pair is an actual product runtime, not a disposable
 Agent fixture. A source or placement receipt does not prove an upgrade.
 
+The common [runtime preparation and authority design](https://github.com/sudoprivacy/sudostack/blob/main/docs/design/cohost-deploy-and-domain-join.md#runtime-preparation)
+defines the package/bootstrap path and the distinction between device deploy,
+managed Session control and Agent collaboration. Edge supplies the device
+profile and invokes the pinned Stack actions. The current DGX browser profile
+keeps local Moss and its cohost; its existing execution is the acceptance
+target. A cohost binary already contains Nexus and scode, while standalone CLI
+local execution already has an in-process Kernel.
+
+Initial SSH delivery and a future enrolled-device request use the same local
+deploy entry. Host permissions currently come from the SSH OS account; a
+machine-enforced bounded deploy delegation and the unified package/bootstrap
+entry remain pending. Their product design is shared in Stack, rather than
+being implemented as another Edge authentication or download protocol.
+
 The controlled DGX upgrade has now run through the pinned shared selection
 action on the existing three-service product. Both Nexus services and official
 Moss 0.1.78 passed authenticated readiness. The stable controller instance,
