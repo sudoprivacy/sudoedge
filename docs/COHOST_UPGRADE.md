@@ -19,6 +19,21 @@ machine-enforced bounded deploy delegation and the unified package/bootstrap
 entry remain pending. Their product design is shared in Stack, rather than
 being implemented as another Edge authentication or download protocol.
 
+For an enrolled local Moss controller, the same pinned Stack actions are now
+available through `scripts/stack-action.py operation`. The device operator
+installs a private registry with immutable plan hashes and existing-product
+owner bindings. Calls accept only an approved plan ID and the original
+operation ID; they cannot supply a remote executable, URL or shell command.
+The shared runner submits a single user-systemd job so upgrading Moss does not
+terminate its own deployment. A lost response stays Unknown, and subsequent
+queries recover that job's receipt instead of starting another one. This is an
+OS-account deployment entry, not a new authenticator or OS sandbox. Moss retains
+the original human delegation and managed Agent authorization before invoking
+it. The Stack [device operation contract](https://github.com/sudoprivacy/sudostack/blob/main/docs/deployment/agent-host.md#device-owned-deployment-operations)
+defines registry/plan preparation and receipt semantics. Joining a collaboration
+space remains a separate native authorization step. Source and process fixtures
+do not establish a real DGX systemd handoff or completed cross-domain deployment.
+
 The controlled DGX upgrade has now run through the pinned shared selection
 action on the existing three-service product. Both Nexus services and official
 Moss 0.1.78 passed authenticated readiness. The stable controller instance,

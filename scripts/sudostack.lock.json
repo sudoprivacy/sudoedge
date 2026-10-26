@@ -1,6 +1,6 @@
 {
   "repository": "sudoprivacy/sudostack",
-  "commit": "4ed61f35c60868e73e2c223e068b98a6a84d7849",
+  "commit": "eca7e2b0b154ae14f45c2becc5230b793780cec2",
   "path": "tools/deploy/cohost.py",
   "sha256": "8198f87075bba1d35526d1e046adfc02900b074b3f9bb98c045889897a6158e7",
   "testPath": "tools/deploy/test_cohost.py",
@@ -24,5 +24,9 @@
   "productQualificationPath": "tools/deploy/product_qualification.py",
   "productQualificationSha256": "d579da117fbda7b5a736d10a32da901551542f6e725fe5687f2fab038be5bae1",
   "productQualificationTestPath": "tools/deploy/test_product_qualification.py",
-  "productQualificationTestSha256": "83451a8cc0fd1e11db7934c54f4d2f8c81e984714fc516d4ad299e714f7ca6dc"
+  "productQualificationTestSha256": "83451a8cc0fd1e11db7934c54f4d2f8c81e984714fc516d4ad299e714f7ca6dc",
+  "deviceOperationPath": "tools/deploy/device_operation.py",
+  "deviceOperationTestPath": "tools/deploy/test_device_operation.py",
+  "deviceOperationSha256": "90cb3e9b581970ddaac68415b93c347b9b666a7316b86b7e770e426e6e896021",
+  "deviceOperationTestSha256": "8cc0a95cd11b23ad4e5c7f9de410ae86ff3c7df7f4c4c34b8df2da687aeb7b86"
 }

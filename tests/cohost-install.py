@@ -120,5 +120,34 @@ class EdgeProductQualificationTests(product_shared.ProductQualificationTests):
         self.assertNotIn('must not execute',result.stderr)
 
 
+operation_test = STACK/LOCK['deviceOperationTestPath']
+assert hashlib.sha256(operation_test.read_bytes()).hexdigest() == LOCK['deviceOperationTestSha256']
+operation_spec = importlib.util.spec_from_file_location('shared_device_operation_tests',operation_test)
+operation_shared = importlib.util.module_from_spec(operation_spec)
+operation_spec.loader.exec_module(operation_shared)
+
+
+class EdgeDeviceOperationTests(operation_shared.DeviceOperationTests):
+    def test_installed_operation_entry_and_changed_implementation_refusal(self):
+        command = [sys.executable,str(ROOT/'scripts/stack-action.py'),'operation','--help']
+        environment = {**os.environ,'SUDOSTACK_DEPLOY_ROOT':str(STACK)}
+        result = subprocess.run(command,env=environment,capture_output=True,text=True,timeout=15)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIn('inspect,submit,query,execute',result.stdout)
+        fake = self.home/'changed-shared'
+        for key in ['path','checkpointPath','configurationPath','selectionPath',
+                    'productQualificationPath','deviceOperationPath']:
+            relative = Path(LOCK[key]);target = fake/relative
+            target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes((STACK/relative).read_bytes())
+        (fake/LOCK['deviceOperationPath']).write_text('raise RuntimeError("must not execute")')
+        result = subprocess.run(command,env={**environment,'SUDOSTACK_DEPLOY_ROOT':str(fake)},
+            capture_output=True,text=True,timeout=15)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('does not match the pinned source',result.stderr)
+        self.assertNotIn('must not execute',result.stderr)
+        self.assertEqual(self.fixture.calls,[])
+
+
 if __name__ == '__main__':
     unittest.main()
