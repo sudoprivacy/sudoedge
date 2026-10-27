@@ -32,6 +32,14 @@ jobs:
         run: python tests/cohost-install.py
         env:
           SUDOSTACK_DEPLOY_ROOT: ${{ github.workspace }}/.shared/sudostack
+      - name: Standard action package and installed Edge consumer
+        run: |
+          python .shared/sudostack/tools/deploy/cos_bundle.py create-actions \
+            --repository .shared/sudostack --commit '${{ steps.stack.outputs.commit }}' \
+            --architecture amd64 --output "$RUNNER_TEMP/device-actions"
+          python tests/device-action-package.py --package-dir "$RUNNER_TEMP/device-actions" \
+            --descriptor-sha256 "$(sha256sum "$RUNNER_TEMP/device-actions/bundle.json" | cut -d ' ' -f 1)" \
+            --source-commit '${{ steps.stack.outputs.commit }}'
       - name: Cold-copy checker refuses host execution
         run: python tests/cohost-checkpoint-boot-test.py
       - name: Existing product native unit selection preserves ownership

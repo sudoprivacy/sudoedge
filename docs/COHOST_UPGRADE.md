@@ -1,5 +1,12 @@
 # Qualify an existing cohost upgrade
 
+Install the [source-pinned shared action package](https://github.com/sudoprivacy/sudostack/blob/c2ec3f698811830ac1cf005f54c2ae3aec830d11/docs/deployment/device-action-package.md)
+with Stack's existing verified bundle client, then set `SUDOSTACK_DEPLOY_ROOT` to
+its installed root (or the `assets` directory produced by `fetch`). Edge checks
+the same per-file pins before execution. This requires no checkout, model images,
+Python package install, new credential issuer or alternative deploy executor.
+Package installation does not approve a plan, start a service or join a domain.
+
 Use the shared sudostack cold checkpoint through the pinned Edge action. Keep
 existing units/drop-ins, data, identities, model routes and the Moss database.
 The installed Moss/cohost pair is an actual product runtime, not a disposable
