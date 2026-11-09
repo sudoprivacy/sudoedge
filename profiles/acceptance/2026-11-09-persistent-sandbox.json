@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "scope": "Persistent DGX gVisor cohost, local model and Router recovery",
+  "overallEdgeDeliveryComplete": false,
+  "productionCohostPlacementChanged": true,
+  "mossVersion": "0.1.103",
+  "cohostVersion": "0.2.40",
+  "nexusVersion": "0.8.26",
+  "cohostSha256": "73a2afdbdd241fde80ca57e1a9b807f673901304e12a56da341b81d6a705472b",
+  "containerImageSha256": "d5aeb98ef10e8cac696ec0a9d8af6035b4171f500f4a3863b25e8f00bfaadd6f",
+  "gvisor": {
+    "release": "gvisor-gsudoprivacy-20261019.1-linux-arm64",
+    "runtime": "moss-gvisor-a48705949c60",
+    "archiveSha256": "a48705949c603167fa6fab97ffd7d1d83299fea507c94cd044c899c101648a4a",
+    "user": "1000:1000",
+    "rootReadOnly": true,
+    "controllerPolicyDirectoryReadOnly": true,
+    "separateWritableAgentDirectories": true
+  },
+  "product": {
+    "originalSessionBindingRetained": true,
+    "localGpuModelTurnsPassed": 3,
+    "nativeProducerReceiptSha256": "87de520cfe41c7e3be6ab312d90fa3999b5601319ff62f2deb7137182cfc8888"
+  },
+  "analyzer": {
+    "imageSha256": "8778a744a9cbae4601d005c56033423b2acad144095b8483e6374ae144b08c37",
+    "productionPort": 59080,
+    "chineseRecognitionRegressionsPassed": 6
+  },
+  "routerRecovery": {
+    "actualRamDataReset": true,
+    "localAndCloudCatalogsRestored": true,
+    "upstreamKeyRestoredFromMossNexusVault": true,
+    "localAndExternalRelayKeysSeparate": true,
+    "mossCredentialsRefreshed": true,
+    "nativeMountRestoreCommandPassed": true,
+    "sessionRowsRetained": true,
+    "persistentCohostProcessRetained": true,
+    "wholeBoxColdBootTested": false
+  },
+  "windowsTunnel": {
+    "existingInteractiveLogonDate": "2026-10-26",
+    "launcherDelaySeconds": 2.731198,
+    "activeLauncherAndTunnelChainObserved": true,
+    "webuiHealthAcceptedOn20261109": true,
+    "freshSignInForced": false
+  },
+  "cloudDlp": {
+    "providerEnabled": true,
+    "policyEnabled": false,
+    "realCloudBootstrapAnswered": true,
+    "completeJourneyAccepted": false,
+    "legacyCreationBypassDetected": true,
+    "admissionFixMergedPr": "https://github.com/sudoprivacy/moss/pull/525",
+    "admissionFixDeployed": false,
+    "sharedBackendRepositoryArchived": true,
+    "backendHandoffConfirmed": true,
+    "backendTarget": "sudoprivacy/mosswork"
+  },
+  "sharedDeployment": {
+    "stackCommit": "42f87705a9b4ebead34c980bd4a1b28d74d60b1f",
+    "edgeCommit": "d71766ac898cff22678e58479d02d438667ffbf0",
+    "defaultInstalledActionPinAccepted": true,
+    "obsoleteCohostEnvironmentVariablesRemoved": 7,
+    "obsoleteEgressDropinDeleted": true
+  },
+  "mossworkIntegrationAccepted": false,
+  "remaining": [
+    "Implement native admission and DLP management integration in Mosswork using shared SudoCode/Nexus and sudostack",
+    "Complete actual Edge cloud model DLP qualification",
+    "Resolve and requalify the original-session post-restart model journey",
+    "Qualify physical power-cycle recovery separately"
+  ],
+  "wholeBoxRestart": {
+    "wholeBoxRestartTested": true,
+    "powerCycleTested": false,
+    "kernelUnchanged": true,
+    "rowsBefore": {
+      "sessions": 35,
+      "session_attempts": 84,
+      "session_events": 598
+    },
+    "rowsAfterOneModelTurn": {
+      "sessions": 35,
+      "session_attempts": 85,
+      "session_events": 604
+    },
+    "sessionCountRetained": true,
+    "sameSessionNativeBindingRetained": true,
+    "projectedContextRetainedBeforeTurn": true,
+    "vaultUpstreamKeyUnchanged": true,
+    "independentRelayCredentials": true,
+    "persistentGvisorContainerRetained": true,
+    "controllerPolicyStillReadOnly": true,
+    "analyzerSixRegressionsPassed": true,
+    "postBootOriginalSessionModelJourneyAccepted": false,
+    "modelJourneyFailure": "First current turn answered with total=553 rather than requested subtotal=540; strict three-turn qualification stopped. Authentication, native binding and projected history checks passed. No assertion or model deadline was weakened."
+  }
+}

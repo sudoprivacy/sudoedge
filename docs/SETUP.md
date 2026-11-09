@@ -20,22 +20,42 @@ qualification, including a dependent reply and reattach. A separate actual
 WebUI conversation returned `42`, then `43`, and retained both after reload;
 its screenshots were inspected with ai-dev-browser.
 
-This is runtime and local-model acceptance. **The permanent Edge cloud DLP
-path is not yet accepted.** The live service still has its previous model-route
-and gate configuration. A current shared analyzer image passed six recognition
-regressions and request-scoped business-policy isolation on a separate loopback
-port; it has not replaced the existing production analyzer.
+The persistent execution cohost now runs as UID 1000 in the published ARM64
+gVisor runtime. Its root filesystem and the controller's policy directory are
+read-only; agent home, temporary files and native workspace have separate writable
+mounts. The original native session passed three real local-GPU turns after
+this placement change. The shared analyzer now serves the actual loopback
+port 59080 and passed all six Chinese recognition regressions.
 
-Before enabling the permanent cloud route, finish controller-only policy-file
-delivery, encrypted cloud credentials, Moss saved/applied revision checks,
-browser cloud redaction/refusal/failure handling and service-restart recovery.
-The actual policy-file isolation checks failed: the user systemd service could
-still write the supposedly read-only fixture, while bubblewrap returned
-`bwrap: setting up uid map: Permission denied`. Do not treat a `ReadOnlyPaths`
-directive or mode 0600 under the same host user as an enforced boundary.
-The service placement needed to enforce that boundary is awaiting a deployment
-decision; no global namespace or AppArmor setting was changed.
+The permanent cloud route is configured through `https://hk.sudorouter.ai` with
+the upstream key encrypted in Moss/Nexus Vault. Local and external relay keys
+remain separate. A real reset of new-api's RAM-backed data passed recovery
+through the installed boot service: both routes, Moss credentials and Nexus
+model mounts recovered, while session rows and the cohost process were retained.
+The content policy remains OFF. A subsequent actual whole-box restart restored
+all six service units, both model catalogs, Vault-backed credentials and the
+same gVisor container with its read-only policy directory. The original session
+binding and projected history were preserved; direct local inference returned
+`42`. The strict original-session three-turn rerun stopped on its first answer:
+the model returned `total=553` instead of the requested `subtotal=540`. This
+model qualification remains failed. No assertion or deadline was relaxed.
+An actual restart does not establish physical power-cycle recovery.
 
+**Full Edge cloud DLP acceptance remains pending.** The common real-model
+journey returned its bootstrap answer, then detected that new legacy runtime
+sessions could bypass the configured local native default. Moss #525 fixes
+that admission check and has merged after all source and packaged-runtime CI
+checks passed. Its later dev packaging encountered Ubuntu DNS and npm mirror
+download failures. The follow-up build repair passed local frozen installation
+and the real admin build, but its push was refused when the Moss repository
+became archived. The user has confirmed that both the backend and frontend migrate to
+`sudoprivacy/mosswork`, reusing SudoCode/Nexus and shared sudostack assembly.
+The remaining management/admission integration targets Mosswork; its acceptance
+is pending. The Box keeps its working Moss 0.1.103 service. The failed receipts and restored
+disabled policy are retained.
+
+The current [persistent sandbox and recovery receipt](../profiles/acceptance/2026-11-09-persistent-sandbox.json)
+records the actual placement, Router recovery and outstanding DLP boundary.
 The portable [upgrade acceptance record](../profiles/acceptance/2026-11-09-native-runtime-upgrade.json)
 pins releases, executable hashes and the precise acceptance scope. The older
 dated entries below retain historical evidence and do not describe the current

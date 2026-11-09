@@ -1,10 +1,14 @@
 # Content egress checks and ecosystem integration
 
 **Current status (2026-11-09):** official Moss 0.1.103 / cohost 0.2.40 / Nexus
-0.8.26 are deployed on the existing DGX product. Native original-session local
-model recovery and actual WebUI multi-turn/reload checks passed. Permanent
-cloud-route DLP and controller-only policy-file isolation remain unaccepted;
-the real read-only checks failed. See the [current runbook](SETUP.md#current-runtime-and-dlp-completion--2026-11-09)
+0.8.26 are deployed on the existing DGX product. Its persistent execution
+cohost now runs in the published ARM64 gVisor sandbox with a read-only
+controller policy directory. Original-session local model recovery, analyzer
+regressions and actual Router reset/credential/mount recovery passed. The
+actual whole-box restart restored services, Vault credentials, model catalogs
+and original-session bindings. Its strict model-math rerun failed and remains
+unaccepted. The complete permanent cloud DLP journey awaits native admission
+and management integration in Mosswork after the user confirmed backend migration. See the [current runbook](SETUP.md#current-runtime-and-dlp-completion--2026-11-09)
 and [portable upgrade receipt](../profiles/acceptance/2026-11-09-native-runtime-upgrade.json).
 The dated matrices below retain their original acceptance scope.
 
@@ -107,7 +111,7 @@ This is content-hook audit coverage, not a claim about every application's logs.
 
 | Form | Intended assembly | Required integration and current status |
 |---|---|---|
-| SudoEdge browser | Local WebUI → local Moss → ManagedAgentService in nexusd-cohost → in-process scode → Nexus mount → local new-api | Local route is deployed. The external route has passed isolated real-wire acceptance; install the permanent gated mount and encrypted credential, then accept browser selection and restart recovery |
+| SudoEdge browser | Local WebUI → local Moss → ManagedAgentService in nexusd-cohost → in-process scode → Nexus mount → local new-api | Persistent gVisor cohost, both model mounts and Vault-backed cloud credentials are deployed. Original local-model turns and actual Router reset recovery passed. Whole-box restart restored credentials and bindings; strict model-math rerun failed. Full cloud DLP awaits the confirmed Mosswork backend integration |
 | Sudo Cloud | Cloud Moss → user's nexusd-cohost ManagedAgentService → tenant model mount → SudoRouter; nexusd-cluster supplies control-plane identity and broker services | Put the hook and loopback analyzer in the daemon whose kernel receives that tenant's model writes. Configure tenant policy and outbound mounts there; the central broker alone does not inspect a user's pod-local prompt |
 | Sudo Private | Customer-managed service form using the same shared assembly | The customer chooses which model and A2A mounts cross its approved boundary. An endpoint outside one process is not automatically outside the customer's trust boundary |
 | Standalone scode CLI without Nexus | Independent CLI process with direct model transport | Nexus and DLP are optional for this form; direct traffic is outside this gate's scope |
@@ -133,7 +137,7 @@ Implementation ownership remains:
 - **sudocode:** CLI/cohost runtime, mounted model transport and its caller errors.
 - **sudostack:** common image, policy schema/extensions, composition and evaluation.
 - **sudoedge:** device installation, plane selection, Router/network wiring and evidence.
-- **Moss/Sudowork:** policy selection/error presentation in user workflows, when implemented.
+- **Shared management backend / Mosswork:** policy authority and product error presentation; Mosswork integration requires separate acceptance.
 
 ## Evidence and next acceptance
 
