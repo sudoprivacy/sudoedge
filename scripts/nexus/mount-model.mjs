@@ -7,8 +7,8 @@ import protoLoader from '@grpc/proto-loader';
 const configPath = process.env.SUDOEDGE_MODEL_MOUNT_CONFIG;
 if (!configPath) throw new Error('SUDOEDGE_MODEL_MOUNT_CONFIG is required');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-const router = JSON.parse(fs.readFileSync(config.routerConfig, 'utf8')).auth_modes['api-key'].sudorouter;
-if (!router?.baseUrl || !router.apiKey) throw new Error('Provision the local Router before mounting its model route');
+const routers = JSON.parse(fs.readFileSync(config.routerConfig, 'utf8')).auth_modes['api-key'];
+if (!Array.isArray(config.routes) || !config.routes.length) throw new Error('Configure explicit Nexus model routes');
 const definitions = protoLoader.loadSync(path.join(config.protoRoot, 'nexus/grpc/vfs/vfs.proto'), {
   keepCase: true, longs: String, defaults: true, includeDirs: [config.protoRoot],
 });
@@ -23,13 +23,25 @@ const client = new api(config.endpoint, credentials, {
 });
 try {
   await new Promise((resolve, reject) => client.waitForReady(Date.now() + 60000, error => error ? reject(error) : resolve()));
-  const result = await new Promise((resolve, reject) => client.Setattr({
-    path: config.mountPath, entry_type: 2, backend_type: 'openai', backend_name: 'edge-router',
-    zone_id: config.zoneId,
-    backend_params: { base_url: router.baseUrl, api_key: router.apiKey, blob_root: config.blobRoot },
-  }, { deadline: Date.now() + 90000 }, (error, reply) => error ? reject(error) : resolve(reply)));
-  if (result.is_error) throw new Error('Nexus rejected model mount configuration');
-  console.log(`Nexus model route ready: ${config.mountPath} -> local Router`);
+  let isFailed = false;
+  for (const route of config.routes) {
+    const router = routers[route.providerId];
+    try {
+      if (!router?.baseUrl || !router.apiKey) throw new Error('Router route credential unavailable');
+      const result = await new Promise((resolve, reject) => client.Setattr({
+        path: route.mountPath, entry_type: 2, backend_type: 'openai', backend_name: route.backendName,
+        zone_id: config.zoneId,
+        backend_params: { base_url: router.baseUrl, api_key: router.apiKey, blob_root: route.blobRoot },
+      }, { deadline: Date.now() + 90000 }, (error, reply) => error ? reject(error) : resolve(reply)));
+      if (result.is_error) throw new Error('Nexus rejected model mount configuration');
+      console.log(`Nexus model route ready: ${route.mountPath} -> local Router`);
+    } catch {
+      // Preserve local recovery if the separately configured cloud route fails.
+      isFailed = true;
+      console.error(`Nexus model route restoration failed: ${route.mountPath}`);
+    }
+  }
+  if (isFailed) throw new Error('One or more model routes could not be restored');
 } finally {
   client.close();
 }

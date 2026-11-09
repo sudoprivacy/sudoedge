@@ -4,9 +4,8 @@
 # this restores them. Installed as the sudoedge-reconfigure.service unit by
 # bootstrap.sh and run as the deployer.
 #
-# Restores the LOCAL config (gpustack channel + relay token + sudocode wiring).
-# The cloud channel's key is not persisted (by design), so it is NOT restored
-# here — re-inject it deliberately (SUDOROUTER_KEY) when needed.
+# Restore local inference first, then the optional cloud route from Moss Vault.
+# Client refresh and mount recovery still run if the cloud secret is unavailable.
 set -euo pipefail
 repo="${1:?usage: reconfigure-on-boot.sh <repo>}"
 : "${GPUSTACK_KEY_FILE:?set GPUSTACK_KEY_FILE}"
@@ -18,7 +17,10 @@ if [ -n "${ADMIN_PW_FILE:-}" ]; then
 fi
 # configure.sh waits for new-api itself, so no extra wait needed here.
 bash "$repo/scripts/configure.sh"
-python3 "$repo/scripts/sync-moss-router.py"
+restore_status=0
+python3 "$repo/scripts/restore-cloud-router.py" || restore_status=$?
+python3 "$repo/scripts/sync-moss-router.py" || restore_status=$?
 if [ -f "${SUDOEDGE_MODEL_MOUNT_CONFIG:-$HOME/.config/sudoedge/model-mount.json}" ]; then
-  sudoedge model restore
+  sudoedge model restore || restore_status=$?
 fi
+exit "$restore_status"
