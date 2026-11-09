@@ -7,6 +7,12 @@ domain. Current deployment and acceptance evidence lives in `docs/SETUP.md`.
 The local browser and inference path uses the cohost runtime by default;
 cross-domain agent collaboration and content inspection remain tracked work.
 
+Product frontend and UX work targets
+[Mosswork](https://github.com/sudoprivacy/mosswork), reusing existing
+Moss/SudoCode/Nexus management, identity, session and collaboration contracts.
+Its integration requires product acceptance; existing Box deployment receipts
+retain the scope of the frontend and runtime actually tested.
+
 Product naming follows the [current product introduction](https://s.shareone.vip/md/sudo-chan-pin-yu-jie-jue-fang-an-jie-shao)
 and [Sudo Enterprise planning](https://s.shareone.vip/s/sudo-enterprise-chan-pin-gui-hua).
 `sudoedge` remains the Box deployment adapter; Moss supplies enterprise Agent

@@ -41,7 +41,7 @@ def prepare(profile, destination):
     sys.path.insert(0,str(actions['path'].parent))
     import checkpoint
     import selection
-    from cohost import digest, private_directory, publish, quoted, unit_path
+    from cohost import container_unit, digest, private_directory, publish, quoted, unit_path
 
     destination = checkpoint.owned_path(str(destination))
     if destination.exists():
@@ -55,7 +55,7 @@ def prepare(profile, destination):
     pins = {item['path']:item['sha256'] for item in profile['checkpoint']['pins']}
     prepared = []
     for version in versions:
-        if set(version) - {'unit','binary','sha256','source','entry','workingDirectory'} or not re.fullmatch('[a-f0-9]{40}',version['source']):
+        if set(version) - {'unit','binary','sha256','source','entry','workingDirectory','container'} or not re.fullmatch('[a-f0-9]{40}',version['source']):
             raise ValueError('Expected a source-bound product version')
         unit = version['unit']
         raw = checkpoint.control('show',unit,'--property=FragmentPath,DropInPaths,MainPID')
@@ -69,6 +69,8 @@ def prepare(profile, destination):
                 raise ValueError('Every native drop-in must remain pinned')
             if re.search(r'^\s*ExecStart\s*=',extra.read_text(),re.M):
                 raise ValueError('A drop-in overrides ExecStart; explicit native adaptation is required')
+            if version.get('container') and re.search(r'^\s*ExecStop(?:Post)?\s*=',extra.read_text(),re.M):
+                raise ValueError('A drop-in overrides the stop boundary; explicit native adaptation is required')
         text = path.read_text()
         index, command = service_assignments(text,'ExecStart')
         arguments = shlex.split(command)
@@ -79,6 +81,12 @@ def prepare(profile, destination):
         binary = checkpoint.owned_path(version['binary'])
         if digest(binary) != version['sha256']:
             raise ValueError('Product candidate executable changed')
+        if 'container' in version:
+            if version.get('entry') or version.get('workingDirectory'):
+                raise ValueError('Container placement retains the existing host working directory and has no host application entry')
+            prepared.append({'unit':unit,'path':path,'payload':container_unit(text,binary,version['container']),
+                             'version':version,'argumentFiles':[]})
+            continue
         arguments[0] = str(binary)
         files = []
         if version.get('entry'):
@@ -124,8 +132,11 @@ def prepare(profile, destination):
         plan['selections'].append({'path':str(item['path']),'expectedSha256':pins[str(item['path'])],
                                    'prepared':str(output),'sha256':digest(output)})
         version = item['version']
-        plan['candidates'].append({'name':item['unit'],'binary':version['binary'],'sha256':version['sha256'],
-                                   'argumentFiles':item['argumentFiles']})
+        candidate = {'name':item['unit'],'binary':version['binary'],'sha256':version['sha256'],
+                     'argumentFiles':item['argumentFiles']}
+        if 'container' in version:
+            candidate['container'] = version['container']
+        plan['candidates'].append(candidate)
     verification = subprocess.run(['systemd-analyze','verify','--man=no',*[item['prepared'] for item in plan['selections']]],
                                   capture_output=True,text=True,timeout=30)
     if verification.returncode:
