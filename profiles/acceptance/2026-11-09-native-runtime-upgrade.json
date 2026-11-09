@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-11-09",
+  "scope": "Existing DGX native runtime upgrade and local-model product acceptance; permanent Edge cloud DLP remains unaccepted",
+  "sharedDeploymentSource": "c2ec3f698811830ac1cf005f54c2ae3aec830d11",
+  "moss": {
+    "release": "server-v0.1.103",
+    "source": "d0b84d4c8fd5905d9ec3f7c160f2ce633f535d0d",
+    "archiveSha256": "eb97aa196eb679614739d5b44bed3094afb6d084387ccab39c8506993251eb0b",
+    "entrySha256": "7fd3649375a5a94e1432c2a07848af28400c2d655d45416584c9acd8481443db"
+  },
+  "cohost": {
+    "release": "nexusd-cohost-v0.2.40",
+    "source": "f5e2f3f596c51a5336a18ded16ef38bf4eddb957",
+    "archiveSha256": "0db9a433809ca693d76132eebfded5c62290f4ba7553d2ef5b6cb58f29dd7f0b",
+    "executableSha256": "73a2afdbdd241fde80ca57e1a9b807f673901304e12a56da341b81d6a705472b",
+    "nexusVersion": "0.8.26",
+    "pluginAbi": 7
+  },
+  "upgrade": {
+    "coldCheckpointPassed": true,
+    "sqliteCopyQualificationPassed": true,
+    "isolatedOriginalProductQualificationPassed": true,
+    "originalSessionAndNativeBindingRetained": true,
+    "rowsBeforeSelection": {
+      "sessions": 32,
+      "session_attempts": 79,
+      "session_events": 563
+    },
+    "rowsAfterSelection": {
+      "sessions": 32,
+      "session_attempts": 79,
+      "session_events": 563
+    },
+    "stableControllerInstanceRetained": true,
+    "existingModelAndGateConfigurationRetained": true
+  },
+  "actualProduct": {
+    "nativeModelTurnsCompleted": 3,
+    "nativeQualificationReceiptSha256": "9895045e80ec7e7ff447fe76f14d659180b01215b4c47ae59f98a46573740b22",
+    "browserVisibleReplies": [
+      "42",
+      "43"
+    ],
+    "browserReloadRetainedHistory": true,
+    "browserVisualsInspected": true,
+    "coldBootTested": false
+  },
+  "analyzerCandidate": {
+    "passed": true,
+    "image": "sha256:8778a744a9cbae4601d005c56033423b2acad144095b8483e6374ae144b08c37",
+    "sharedSource": "41a9db5924ef8028d97e60974efac2dcc8e52046",
+    "recognitionRegressionCases": 6,
+    "requestPolicyIsolation": true,
+    "productionAnalyzerReplaced": false
+  },
+  "policyFileIsolation": {
+    "accepted": false,
+    "userSystemdReadOnlyFixtureWritePrevented": false,
+    "bubblewrapError": "bwrap: setting up uid map: Permission denied",
+    "deploymentDecisionPending": true,
+    "globalNamespaceOrAppArmorSettingsChanged": false
+  },
+  "permanentCloudDlpAccepted": false,
+  "remaining": [
+    "Enforced controller-only policy-file delivery",
+    "Permanent cloud mount and encrypted credentials",
+    "Moss hot policy saved/applied revision acceptance",
+    "Real browser cloud redaction, refusal and detector failure",
+    "Service restart and credential recovery"
+  ],
+  "separateAcceptance": [
+    "Representative business-corpus quality",
+    "Cross-domain A2A",
+    "Artifact export",
+    "Whole-machine cold boot"
+  ]
+}

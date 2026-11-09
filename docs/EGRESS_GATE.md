@@ -1,5 +1,13 @@
 # Content egress checks and ecosystem integration
 
+**Current status (2026-11-09):** official Moss 0.1.103 / cohost 0.2.40 / Nexus
+0.8.26 are deployed on the existing DGX product. Native original-session local
+model recovery and actual WebUI multi-turn/reload checks passed. Permanent
+cloud-route DLP and controller-only policy-file isolation remain unaccepted;
+the real read-only checks failed. See the [current runbook](SETUP.md#current-runtime-and-dlp-completion--2026-11-09)
+and [portable upgrade receipt](../profiles/acceptance/2026-11-09-native-runtime-upgrade.json).
+The dated matrices below retain their original acceptance scope.
+
 This is the SudoEdge deployment reference for detection points, policy and
 acceptance, checked on 2026-10-18. The first diagram in
 [Sudo Cloud architecture](https://s.shareone.vip/s/sudo-cloud-plan) is the

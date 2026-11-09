@@ -7,6 +7,40 @@
 
 ## Existing-runtime maintenance
 
+### Current runtime and DLP completion — 2026-11-09
+
+The DGX now runs official Moss **0.1.103** and cohost **0.2.40** with Nexus
+**0.8.26**. The shared Stack checkpoint and selection actions upgraded the
+existing three-service product. The stable controller identity, native session
+binding and all 32 pre-existing sessions were retained. The packaged Moss
+SQLite migrator first passed on a private database copy; an isolated cold-copy
+product then passed original-session recovery and three real local-Qwen turns.
+After activation the same original session passed the shared product
+qualification, including a dependent reply and reattach. A separate actual
+WebUI conversation returned `42`, then `43`, and retained both after reload;
+its screenshots were inspected with ai-dev-browser.
+
+This is runtime and local-model acceptance. **The permanent Edge cloud DLP
+path is not yet accepted.** The live service still has its previous model-route
+and gate configuration. A current shared analyzer image passed six recognition
+regressions and request-scoped business-policy isolation on a separate loopback
+port; it has not replaced the existing production analyzer.
+
+Before enabling the permanent cloud route, finish controller-only policy-file
+delivery, encrypted cloud credentials, Moss saved/applied revision checks,
+browser cloud redaction/refusal/failure handling and service-restart recovery.
+The actual policy-file isolation checks failed: the user systemd service could
+still write the supposedly read-only fixture, while bubblewrap returned
+`bwrap: setting up uid map: Permission denied`. Do not treat a `ReadOnlyPaths`
+directive or mode 0600 under the same host user as an enforced boundary.
+The service placement needed to enforce that boundary is awaiting a deployment
+decision; no global namespace or AppArmor setting was changed.
+
+The portable [upgrade acceptance record](../profiles/acceptance/2026-11-09-native-runtime-upgrade.json)
+pins releases, executable hashes and the precise acceptance scope. The older
+dated entries below retain historical evidence and do not describe the current
+runtime versions.
+
 The appliance consumes the source-pinned sudostack deploy actions through
 `scripts/stack-action.py`; it does not carry a second checkpoint or installer.
 For a controller/cohost upgrade, prepare an owner-only device plan containing
