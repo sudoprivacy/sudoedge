@@ -482,6 +482,10 @@ plaintext key file, command argument or environment variable by the restorer.
 Cloud failures remain visible in the boot unit's result while local credential
 refresh and model mount recovery still run. The mount helper attempts every
 declared route, so cloud failure cannot skip local restoration.
+The helper uses `@sudo/user-runtime` 0.2.6's shared model configuration builder
+for the Nexus backend parameters, including both Anthropic and OpenAI protocol
+endpoints. Generate the cohost's native aliases with that same builder during
+initial deployment; retain aliases used by existing sessions.
 
 Use Moss `/admin/egress-policy` or `/api/v1/settings/egress` to control model DLP;
 network connectivity and DLP are independent settings. Runtime confinement,

@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@sudo/user-runtime": "https://github.com/sudoprivacy/sudostack/releases/download/user-runtime-v0.2.6/sudo-user-runtime-0.2.6.tgz",
     "@grpc/grpc-js": "1.14.0",
     "@grpc/proto-loader": "0.8.0"
   }
