@@ -37,13 +37,14 @@ def run(package, expected, commit):
         home.mkdir()
         environment = {name: value for name, value in os.environ.items() if name in ('PATH', 'LANG', 'LC_ALL')}
         environment['HOME'] = str(home)
-        installed = root / 'installed'
+        installed = home / '.local/share/sudostack/deploy' / commit
         command = [sys.executable, str(client), 'unpack', '--descriptor', str(descriptor),
                    '--archive', str(package / bundle), '--destination', str(installed)]
         for _ in range(2):
             result = subprocess.run(command, cwd=root, env=environment, capture_output=True, text=True, timeout=15)
             assert result.returncode == 0, result.stderr
-        environment['SUDOSTACK_DEPLOY_ROOT'] = str(installed)
+        # Boot services resolve the exact locked installation without an env override.
+        assert 'SUDOSTACK_DEPLOY_ROOT' not in environment
         for action in ('', 'checkpoint', 'configuration', 'selection', 'product', 'operation'):
             invocation = [sys.executable, str(ROOT / 'scripts/stack-action.py')]
             if action:
