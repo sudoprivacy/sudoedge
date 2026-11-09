@@ -10,9 +10,8 @@ import sys
 
 def verified_shared():
     lock = json.loads(Path(__file__).with_name('sudostack.lock.json').read_text(encoding='utf-8'))
-    source = os.environ.get('SUDOSTACK_DEPLOY_ROOT')
-    if not source:
-        raise ValueError('Set SUDOSTACK_DEPLOY_ROOT to the verified pinned sudostack checkout or offline action bundle')
+    source = os.environ.get('SUDOSTACK_DEPLOY_ROOT') or str(
+        Path.home()/'.local/share/sudostack/deploy'/lock['commit'])
     root = Path(source).resolve(strict=True)
     # Check the shared dependency too: checkpoint imports existing placement
     # helpers rather than carrying another private-publishing implementation.

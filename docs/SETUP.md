@@ -472,7 +472,10 @@ private `~/.config/sudoedge/cloud-route.json` owned by the controller user:
 
 The login file contains `username` and `password`; keep it mode 0600 outside
 agent mounts. Install the exact Stack device action bundle selected by
-`scripts/sudostack.lock.json` and set `SUDOSTACK_DEPLOY_ROOT` for the boot unit.
+`scripts/sudostack.lock.json` under
+`~/.local/share/sudostack/deploy/<locked-commit>`. The boot adapter resolves this
+installation automatically and verifies every executable against the source lock.
+`SUDOSTACK_DEPLOY_ROOT` selects an explicit alternate installation when needed.
 Provision the `box-gpu` and `box-cloud` Moss providers before enabling refresh.
 
 `reconfigure-on-boot.sh` restores local GPU routing first, reads the cloud key
