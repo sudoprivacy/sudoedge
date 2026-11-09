@@ -1,7 +1,7 @@
 {
   "version": 1,
   "revision": 0,
-  "enabled": true,
+  "enabled": false,
   "mode": "redact",
   "modelMounts": [
     "/cloud-model"
