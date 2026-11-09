@@ -26,6 +26,10 @@ jobs:
           path: .shared/sudostack
       - name: Router provisioning and catalog preservation
         run: python tests/router-config.py
+      - name: Encrypted cloud credential recovery and local continuity
+        run: python tests/cloud-router-recovery.py -v
+        env:
+          SUDOSTACK_DEPLOY_ROOT: ${{ github.workspace }}/.shared/sudostack
       - name: Model limits and client configuration
         run: python tests/model-config.py
       - name: Cohost installation verifies actual process bytes

@@ -1,6 +1,6 @@
 {
   "repository": "sudoprivacy/sudostack",
-  "commit": "3c811b29a6e05afe6400f1a58f266af1f73404e5",
+  "commit": "cbd6e97ea13d0d7c5705649fac78a4796e11723a",
   "path": "tools/deploy/cohost.py",
   "sha256": "5c1d74f89813862f17127f5244718b8319e93ff9128bd8575f8b55f81744b829",
   "testPath": "tools/deploy/test_cohost.py",
@@ -27,6 +27,10 @@
   "productQualificationTestSha256": "83451a8cc0fd1e11db7934c54f4d2f8c81e984714fc516d4ad299e714f7ca6dc",
   "deviceOperationPath": "tools/deploy/device_operation.py",
   "deviceOperationTestPath": "tools/deploy/test_device_operation.py",
-  "deviceOperationSha256": "90cb3e9b581970ddaac68415b93c347b9b666a7316b86b7e770e426e6e896021",
-  "deviceOperationTestSha256": "8cc0a95cd11b23ad4e5c7f9de410ae86ff3c7df7f4c4c34b8df2da687aeb7b86"
+  "deviceOperationSha256": "dae2e07e98b655f3baf486914a56e89f130264e1f8e14fe7dc3921686c1845a9",
+  "deviceOperationTestSha256": "8cc0a95cd11b23ad4e5c7f9de410ae86ff3c7df7f4c4c34b8df2da687aeb7b86",
+  "mossControlPath": "tools/deploy/moss_control.py",
+  "mossControlTestPath": "tools/deploy/test_moss_control.py",
+  "mossControlSha256": "9f3378466e43bc457450bfb2f632c32621526dcc6a561c67c93a1cc89c564f1b",
+  "mossControlTestSha256": "61dc52bf7d5d0be163361ccb0b46b501a5d795b383e8ca15ff3fe2ef87e469a0"
 }

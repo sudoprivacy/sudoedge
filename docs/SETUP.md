@@ -417,9 +417,21 @@ Prepare a private JSON configuration using the deployed paths:
   "protoRoot": "/home/taolei/sudo-dgx/bringup/grpc-client/proto",
   "tlsDir": "/home/taolei/sudo-dgx/bringup/cohost-model-validation/data/tls",
   "routerConfig": "/home/taolei/.nexus/sudocode/sudocode.json",
-  "mountPath": "/model",
   "zoneId": "model",
-  "blobRoot": "/home/taolei/sudo-dgx/bringup/cohost-model-validation/model-cache"
+  "routes": [
+    {
+      "mountPath": "/model",
+      "providerId": "sudorouter",
+      "backendName": "edge-router",
+      "blobRoot": "/home/taolei/sudo-dgx/bringup/cohost-model-validation/model-cache"
+    },
+    {
+      "mountPath": "/cloud-model",
+      "providerId": "sudoedge-external",
+      "backendName": "edge-cloud-router",
+      "blobRoot": "/home/taolei/sudo-dgx/bringup/cohost-model-validation/cloud-model-cache"
+    }
+  ]
 }
 ```
 
@@ -438,6 +450,42 @@ Installed config: `~/.config/sudoedge/model-mount.json`; helper and Node path:
 unit's `model-mount.conf` drop-in. After restarting, start a real embedded
 session and verify a new model answer. Old transient reply streams are not
 a valid recovery assertion.
+
+### Restore cloud credentials from Moss Vault
+
+The cloud channel uses new-api's separate `external` group. Store its upstream
+key once through Moss's existing organization secret UI/API, then create a
+private `~/.config/sudoedge/cloud-route.json` owned by the controller user:
+
+```json
+{
+  "schemaVersion": 1,
+  "moss": {
+    "origin": "http://127.0.0.1:43127",
+    "organizationId": "YOUR_ORGANIZATION_ID",
+    "credentialFile": "/home/taolei/.config/sudoedge/moss-admin.json"
+  },
+  "secret": { "namespace": "system:sudoedge-router", "key": "api-key" },
+  "upstream": { "baseUrl": "https://hk.sudorouter.ai", "models": ["gpt-6-luna"] }
+}
+```
+
+The login file contains `username` and `password`; keep it mode 0600 outside
+agent mounts. Install the exact Stack device action bundle selected by
+`scripts/sudostack.lock.json` and set `SUDOSTACK_DEPLOY_ROOT` for the boot unit.
+Provision the `box-gpu` and `box-cloud` Moss providers before enabling refresh.
+
+`reconfigure-on-boot.sh` restores local GPU routing first, reads the cloud key
+through the shared authenticated Moss client, and configures new-api in memory.
+The upstream key is encrypted in Nexus Vault and is not written to an Edge
+plaintext key file, command argument or environment variable by the restorer.
+Cloud failures remain visible in the boot unit's result while local credential
+refresh and model mount recovery still run. The mount helper attempts every
+declared route, so cloud failure cannot skip local restoration.
+
+Use Moss `/admin/egress-policy` or `/api/v1/settings/egress` to control model DLP;
+network connectivity and DLP are independent settings. Runtime confinement,
+native applied revisions and real redaction require separate device acceptance.
 
 ## Memory safety (unified-memory machine)
 One physical pool (RAM = GPU = 121 GiB): a served model's weights + KV cache + preprocessing all draw from it. Guardrails keep the box remotely recoverable and turn an over-allocation into a cheap clean kill.

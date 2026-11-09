@@ -8,7 +8,7 @@ import urllib.error
 import urllib.request
 
 
-def configure() -> None:
+def configure(cloud=None) -> None:
     base = os.environ.get('ROUTER_URL', 'http://127.0.0.1:3000').rstrip('/')
     model = os.environ.get('MODEL', 'qwen3-30b')
     context = int(os.environ.get('MODEL_MAX_LEN', '65536'))
@@ -72,10 +72,14 @@ def configure() -> None:
     desired = [{'type': 8, 'name': 'gpustack-local', 'key': gpu_key,
                 'base_url': gpu_url + '/chat/completions', 'models': model, 'status': 1,
                 'group': 'local', 'param_override': json.dumps({'max_tokens': output})}]
-    if os.environ.get('SUDOROUTER_KEY'):
-        desired.append({'type': 1, 'name': 'sudorouter-cloud', 'key': os.environ['SUDOROUTER_KEY'],
-                        'base_url': os.environ.get('SUDOROUTER_URL', 'https://hk.sudorouter.ai').rstrip('/'),
-                        'models': os.environ['SUDOROUTER_MODELS'], 'status': 1, 'group': 'external'})
+    if cloud is None and os.environ.get('SUDOROUTER_KEY'):
+        cloud = {'key': os.environ['SUDOROUTER_KEY'],
+                 'baseUrl': os.environ.get('SUDOROUTER_URL', 'https://hk.sudorouter.ai'),
+                 'models': os.environ['SUDOROUTER_MODELS']}
+    if cloud:
+        desired.append({'type': 1, 'name': 'sudorouter-cloud', 'key': cloud['key'],
+                        'base_url': cloud['baseUrl'].rstrip('/'),
+                        'models': cloud['models'], 'status': 1, 'group': 'external'})
     else:
         for channel in channels:
             if channel['name'] == 'sudorouter-cloud':
@@ -114,7 +118,7 @@ def configure() -> None:
         return key if key.startswith('sk-') else 'sk-' + key
 
     token = route_token('sudocode-local', 'local')
-    is_cloud_configured = bool(os.environ.get('SUDOROUTER_KEY')) or any(
+    is_cloud_configured = bool(cloud) or any(
         item['name'] == 'sudorouter-cloud' for item in channels)
     cloud_token = route_token('sudocode-cloud', 'external') if is_cloud_configured else None
     home = Path(os.environ.get('SUDOEDGE_CONFIG_HOME', str(Path.home() / '.nexus/sudocode')))

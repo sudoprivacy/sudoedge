@@ -79,8 +79,9 @@ class RouterConfigTest(unittest.TestCase):
                                 return
                             state['channels'] = [{**c, **body} if c['id'] == body['id'] else c for c in state['channels']]
                         data = {'items': state['channels']}
-                    elif path == '/api/channel/2/status':
-                        state['channels'][1]['status'] = body['status']
+                    elif path.startswith('/api/channel/') and path.endswith('/status'):
+                        channel_id = int(path.split('/')[3])
+                        next(item for item in state['channels'] if item['id'] == channel_id)['status'] = body['status']
                     elif path == '/api/token/':
                         if body:
                             if self.command == 'PUT':
@@ -136,6 +137,14 @@ class RouterConfigTest(unittest.TestCase):
                 self.assertEqual(state['metadata']['cloud-model']['context_window'], 12345)
                 self.assertTrue(state['metadata']['qwen3-30b']['tool_calling_supported'])
                 self.assertEqual(state['ratios'], {'cloud-model': 2, 'qwen3-30b': 0})
+                with patch.dict(os.environ, env), patch.object(module.time, 'sleep'):
+                    module.configure({'key': 'restored-encrypted-key', 'baseUrl': 'https://router.example.invalid',
+                                      'models': 'cloud-model'})
+                self.assertEqual(len(state['channels']), 2)
+                self.assertEqual(state['channels'][0]['key'], 'restored-encrypted-key')
+                self.assertEqual(state['channels'][0]['status'], 1)
+                self.assertEqual(state['channels'][0]['models'], 'cloud-model')
+                self.assertEqual([item['group'] for item in state['tokens']], ['local', 'external'])
         finally:
             server.shutdown()
             server.server_close()

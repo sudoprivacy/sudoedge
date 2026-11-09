@@ -20,7 +20,8 @@ def verified_shared():
     for path_key, hash_key in [('path', 'sha256'), ('checkpointPath', 'checkpointSha256'),
                                ('configurationPath', 'configurationSha256'),('selectionPath','selectionSha256'),
                                ('productQualificationPath','productQualificationSha256'),
-                               ('deviceOperationPath','deviceOperationSha256')]:
+                               ('deviceOperationPath','deviceOperationSha256'),
+                               ('mossControlPath','mossControlSha256')]:
         relative = Path(lock[path_key])
         if relative.is_absolute() or '..' in relative.parts:
             raise ValueError('Invalid shared action lock path')
