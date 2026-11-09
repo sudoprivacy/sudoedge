@@ -62,3 +62,25 @@ Acceptance must prove raw local-GPU input, redacted cloud input, refused
 analyzer failure, on/off changes without a cohost restart and recovery after
 Moss/cohost/box restart. A2A and artifact export need their own configured
 mounts and real acceptance; the empty list does not imply coverage.
+
+## Container execution placement
+
+The exact-pinned shared checkpoint and selection actions support a non-root
+execution container under the existing user service. The system Docker service
+hosts its verified gVisor runtime; the appliance adapter supplies the image,
+native persistent paths, controller-owned policy directory and loopback network
+selection. Keep GPUStack and new-api outside the agent's filesystem sandbox.
+
+An existing-product selection version may include the shared `container` pin:
+immutable ID, image digest, runtime, non-root user, network mode, deployment
+label, actual init executable digest and every bind mount's read-only mode.
+Use a separately staged, checksummed Docker client as the host launcher. The
+shared preparer preserves startup/readiness hooks, attaches to that exact ID,
+and stops it before cold copying. An overriding stop drop-in requires explicit
+adaptation. Source/identity/data paths remain part of the private product plan.
+
+This prepares placement only. A stopped candidate must pass runtime, policy
+read-only/atomic-update, original-session and model acceptance before the Box
+can claim gVisor or cloud DLP deployment. Future UI changes belong in Mosswork;
+the existing Moss policy management API and native Nexus enforcement remain
+the shared control and execution contracts.

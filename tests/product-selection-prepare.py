@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 STACK = Path(os.environ['SUDOSTACK_DEPLOY_ROOT']).resolve()
@@ -104,6 +105,36 @@ class ProductPreparationTests(unittest.TestCase):
         self.dropin.write_text('[Service]\nExecStart=\n')
         self.profile['checkpoint']['pins'].append({'path':str(self.dropin),'sha256':digest(self.dropin)})
         with self.assertRaisesRegex(ValueError,'drop-in overrides ExecStart'):
+            native.prepare(self.profile,self.home/'prepared')
+        self.assertFalse((self.home/'prepared').exists())
+
+    def test_container_placement_uses_shared_unit_preparation_and_propagates_its_pin(self):
+        import cohost
+        import selection
+        pin = {'id':'c'*64,'imageSha256':'sha256:'+'d'*64,'runtime':'gvisor-reviewed',
+               'user':'1000:1000','networkMode':'host','binarySha256':'e'*64,
+               'deploymentId':'edge-fixture','mounts':[{'source':str(self.fixture.data),'target':'/data','readOnly':False}]}
+        self.profile['versions'][1]['container'] = pin
+        original = (self.units/self.profile['versions'][1]['unit']).read_bytes()
+        with patch.object(cohost,'container_state',return_value={'running':False}) as inspect_container, \
+                patch.object(selection,'container_state',inspect_container):
+            result = native.prepare(self.profile,self.home/'prepared')
+        self.assertEqual(result['status'],'prepared-only')
+        plan = json.loads((self.home/'prepared/plan.json').read_text())
+        self.assertEqual(plan['candidates'][1]['container'],pin)
+        prepared = Path(plan['selections'][1]['prepared']).read_text()
+        self.assertIn('"start" "--attach" "'+pin['id']+'"',prepared)
+        self.assertIn('"stop" "--time" "60" "'+pin['id']+'"',prepared)
+        self.assertEqual((self.units/self.profile['versions'][1]['unit']).read_bytes(),original)
+        self.assertTrue(all(call.args==(pin,False) for call in inspect_container.call_args_list))
+        self.assertEqual(self.fixture.calls,[])
+
+    def test_container_stop_dropin_refuses_before_unit_preparation(self):
+        self.profile['versions'][1]['container'] = {'id':'c'*64}
+        self.dropin = self.units/'stop.conf'
+        self.dropin.write_text('[Service]\nExecStop=/existing/native-stop\n')
+        self.profile['checkpoint']['pins'].append({'path':str(self.dropin),'sha256':digest(self.dropin)})
+        with self.assertRaisesRegex(ValueError,'stop boundary'):
             native.prepare(self.profile,self.home/'prepared')
         self.assertFalse((self.home/'prepared').exists())
 
