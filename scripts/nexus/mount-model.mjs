@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import grpc from '@grpc/grpc-js';
 import protoLoader from '@grpc/proto-loader';
+import { buildCohostModelConfiguration } from '@sudo/user-runtime';
 
 const configPath = process.env.SUDOEDGE_MODEL_MOUNT_CONFIG;
 if (!configPath) throw new Error('SUDOEDGE_MODEL_MOUNT_CONFIG is required');
@@ -28,10 +29,13 @@ try {
     const router = routers[route.providerId];
     try {
       if (!router?.baseUrl || !router.apiKey) throw new Error('Router route credential unavailable');
+      const generated = buildCohostModelConfiguration([{
+        id: route.providerId, mountPath: route.mountPath, backendName: route.backendName,
+        baseUrl: router.baseUrl, apiKey: router.apiKey, blobRoot: route.blobRoot, models: [],
+      }]);
+      const mount = JSON.parse(generated['backend-config.json']).mounts[0];
       const result = await new Promise((resolve, reject) => client.Setattr({
-        path: route.mountPath, entry_type: 2, backend_type: 'openai', backend_name: route.backendName,
-        zone_id: config.zoneId,
-        backend_params: { base_url: router.baseUrl, api_key: router.apiKey, blob_root: route.blobRoot },
+        ...mount, entry_type: 2, zone_id: config.zoneId,
       }, { deadline: Date.now() + 90000 }, (error, reply) => error ? reject(error) : resolve(reply)));
       if (result.is_error) throw new Error('Nexus rejected model mount configuration');
       console.log(`Nexus model route ready: ${route.mountPath} -> local Router`);
