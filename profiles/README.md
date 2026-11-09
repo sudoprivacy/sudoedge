@@ -1,6 +1,7 @@
 # Edge egress deployment
 
-This profile protects the external `/cloud-model` mount in **redact** mode.
+This profile configures the external `/cloud-model` mount in **redact** mode
+and starts DLP **disabled**. Enable it through Moss's egress policy UI/API.
 The local GPU `/model` mount is excluded. Keep their Router credentials and
 provider groups separate so a failed local model cannot fall back to a cloud
 account with the original prompt.
@@ -70,6 +71,9 @@ execution container under the existing user service. The system Docker service
 hosts its verified gVisor runtime; the appliance adapter supplies the image,
 native persistent paths, controller-owned policy directory and loopback network
 selection. Keep GPUStack and new-api outside the agent's filesystem sandbox.
+Give the agent its own writable home. Keep the policy under an immutable root
+parent, with no overlapping writable bind source or destination. The shared
+placement gate rejects those aliases before starting a container.
 
 An existing-product selection version may include the shared `container` pin:
 immutable ID, image digest, runtime, non-root user, network mode, deployment

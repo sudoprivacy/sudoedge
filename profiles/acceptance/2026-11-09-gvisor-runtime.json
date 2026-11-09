@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "scope": "DGX ARM64 runtime qualification and cloud credential preparation",
+  "overallEdgeDeliveryComplete": false,
+  "productionCohostPlacementChanged": false,
+  "mossRelease": "server-v0.1.103",
+  "cohostRelease": "nexusd-cohost-v0.2.40",
+  "cohostSha256": "73a2afdbdd241fde80ca57e1a9b807f673901304e12a56da341b81d6a705472b",
+  "gvisor": {
+    "release": "gvisor-gsudoprivacy-20261019.1-linux-arm64",
+    "source": "a162022a78d4887f1a175765707c518f27fdd4fe",
+    "archiveSha256": "a48705949c603167fa6fab97ffd7d1d83299fea507c94cd044c899c101648a4a",
+    "sentrySha256": "83c2e0f777c0ca75349218b7401b1adf855a9517e2f27d243ae30ba4281606f3",
+    "qualificationRun": "https://github.com/sudoprivacy/moss/actions/runs/42613587031",
+    "publicationRun": "https://github.com/sudoprivacy/moss/actions/runs/42618265465",
+    "publishedCopiesReadBack": ["GitHub", "COS"],
+    "dgxTestedBytesMatchPublishedArchive": true
+  },
+  "policyDirectoryFixture": {
+    "uid": 1000,
+    "blockedWriteOperations": 10,
+    "sameSandboxObservedAtomicControllerReplacement": true,
+    "cleanedUp": true
+  },
+  "dockerRegistration": {
+    "existingContainerCount": 8,
+    "existingContainersRetained": true,
+    "daemonPidRetainedDuringReload": true
+  },
+  "nativeManagedSessionFixture": {
+    "productionProtocol": "acp-mailbox/1",
+    "authenticatedController": true,
+    "sharedModelBuilderVersion": "0.2.6",
+    "actualLocalRouterAndGpuInference": true,
+    "visibleAssistantAnswer": true,
+    "originalLocalHistoryRetained": true,
+    "fixtureStopped": true
+  },
+  "cloudPreparation": {
+    "upstream": "https://hk.sudorouter.ai",
+    "model": "gpt-6-luna",
+    "catalogHttpStatus": 200,
+    "upstreamCredentialStoredInMossNexusVault": true,
+    "vaultApiReadBackAccepted": true,
+    "separateLocalAndExternalRelayCredentials": true,
+    "mossCloudProviderEnabled": false,
+    "nativeCloudMountActivated": false,
+    "modelRequestsSubmitted": 0
+  },
+  "remaining": [
+    "Adopt the sandboxed cohost with a cold checkpoint and original session bindings",
+    "Activate the permanent cloud route and qualify native Moss policy on/off, redaction and refusal",
+    "Qualify detector failure and restart/credential recovery",
+    "Update the original architecture page and final delivery receipts"
+  ]
+}

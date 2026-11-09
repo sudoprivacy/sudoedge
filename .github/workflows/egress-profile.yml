@@ -21,4 +21,4 @@ jobs:
         with:
           node-version: '22.21.0'
       - name: Check the deployment through the shared policy validator
-        run: node .shared-policy/packages/egress-policy/bin/check-profile.mjs profiles/egress-policy.json --expect-enabled --model-mount /cloud-model --exclude-model-mount /model
+        run: node .shared-policy/packages/egress-policy/bin/check-profile.mjs profiles/egress-policy.json --expect-disabled --model-mount /cloud-model --exclude-model-mount /model
