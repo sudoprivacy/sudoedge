@@ -69,12 +69,10 @@ flowchart LR
 
 The dashed SudoCompute relationship is planned profile reuse, separate from
 the current model request path. [SudoCompute](https://github.com/sudoprivacy/sudocompute)
-will supply reusable GPU acceptance, qualified inference recipes and compute
-operations through shared SudoStack assembly. Edge retains appliance bootstrap,
-networking, startup recovery and device acceptance. Its current GPUStack model
-path remains the deployed baseline; SudoCompute integration and version pins
-have not been accepted. The SudoCompute repository is currently private.
-See the [shared dependency graph and ownership map](https://github.com/sudoprivacy/sudostack/blob/main/README.md#gpu-compute-and-inference).
+would supply reusable GPU acceptance and qualified inference recipes; Edge
+keeps appliance bootstrap, networking, startup recovery and device acceptance,
+and its current GPUStack path remains the deployed baseline. See sudostack's
+[repository ownership](https://github.com/sudoprivacy/sudostack/blob/main/docs/deployment-profiles.md#repository-ownership).
 
 Full architecture and rationale: the design doc on ShareOne
 (`s.shareone.vip/s/sudo-stack-on-dgx-spark-she`); cross-org authorship in
