@@ -57,11 +57,22 @@ flowchart LR
     R -->|local channel| G["gpustack<br/>local GPU inference"]
     R -->|stacked upstream| X["sudorouter.ai<br/>cloud models"]
     G --- H["GB10 · 128GB unified memory"]
+    SC["sudocompute · planned<br/>qualified single-node GPU / inference profiles"]
+    SC -.->|recipe and acceptance reuse · pending| G
     classDef local stroke:#3b6fd4,stroke-width:2px;
     classDef cloud stroke:#d98a3b,stroke-width:2px;
+    classDef planned stroke:#9ca3af,stroke-dasharray:5 5;
     class G,H local;
     class X cloud;
+    class SC planned;
 ```
+
+The dashed SudoCompute relationship is planned profile reuse, separate from
+the current model request path. [SudoCompute](https://github.com/sudoprivacy/sudocompute)
+would supply reusable GPU acceptance and qualified inference recipes; Edge
+keeps appliance bootstrap, networking, startup recovery and device acceptance,
+and its current GPUStack path remains the deployed baseline. See sudostack's
+[repository ownership](https://github.com/sudoprivacy/sudostack/blob/main/docs/deployment-profiles.md#repository-ownership).
 
 Full architecture and rationale: the design doc on ShareOne
 (`s.shareone.vip/s/sudo-stack-on-dgx-spark-she`); cross-org authorship in
